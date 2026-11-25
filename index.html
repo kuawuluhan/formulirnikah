@@ -112,6 +112,18 @@ input[type=date],input[type=time]{min-height:46px}
 .same input{width:20px;height:20px;padding:0;margin:0;flex:none;accent-color:var(--ac);appearance:auto;-webkit-appearance:checkbox;box-shadow:none}
 .reset{position:fixed;top:10px;right:10px;z-index:60;width:auto;margin:0;padding:8px 12px;border:0;border-radius:10px;background:#d92d20;color:#fff;font:700 .78rem/1.2 system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .reset:hover{background:#b42318}
+.f.req>label:not(.ktpb):not(.same)::after{content:" *";color:#d92d20;font-weight:800}
+.cek{margin:8px 0 0;padding:9px 12px;border-radius:10px;font-size:.84rem;line-height:1.45;background:var(--card);border:1px solid var(--line)}
+.cek.warn{background:var(--warn);border-color:var(--warnb);color:var(--warnx)}
+.cek.info{color:var(--mut)}
+.prev .cek b{display:inline;font-size:inherit;color:inherit}
+.cekb{display:inline-block;width:auto;margin:4px 0 0;padding:5px 10px;border:1px solid var(--warnb);border-radius:8px;background:#fff;color:#111827;font:700 .78rem system-ui,sans-serif;cursor:pointer}
+.missl{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;max-height:26vh;overflow:auto}
+a.miss{display:inline-block;padding:4px 9px;border-radius:999px;background:var(--warn);border:1px solid var(--warnb);color:var(--warnx);font-size:.78rem;font-weight:700;text-decoration:none}
+.missm{align-self:center;font-size:.78rem;opacity:.8}
+.hasil{display:flex;gap:8px;margin-top:8px}
+.hasil button{flex:1;width:auto;margin:0;padding:10px 8px;border-radius:10px;font:700 .85rem system-ui,sans-serif;cursor:pointer;border:1.5px solid #25d366;background:#25d366;color:#052e16}
+.hasil #btnUnduh{background:#fff;color:#111827;border-color:var(--line)}
 .kop{padding-top:54px}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;max-width:92vw;padding:10px 16px;border-radius:10px;background:#12372a;color:#fff;font:600 .85rem/1.35 system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 .ktpv{display:block;max-width:260px;width:100%;margin-top:6px;border:1px solid var(--line);border-radius:8px}
@@ -185,6 +197,7 @@ button:disabled{opacity:.6;cursor:wait}
     <span>Cetak Berkas Pendaftaran Nikah</span>
   </button>
   <div id="msg" role="status"></div>
+  <div id="hasil" class="hasil" style="display:none"><button type="button" id="btnWA">Bagikan lewat WhatsApp</button><button type="button" id="btnUnduh">Unduh lagi</button></div>
 </div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -246,8 +259,8 @@ function couple(p,male){
     F(p+"_stat","Status perkawinan",{t:"sel",opts:["Belum Kawin","Kawin","Cerai Hidup","Cerai Mati"]})+
     F(p+"_sebab","Penyebab status",{t:"sel",w:1,hide:1,opts:[["CERAI HIDUP","Cerai hidup"],["CERAI MATI","Cerai mati"]]})+
     F(p+"_lama",male?"Nama istri terdahulu / saat ini":"Nama suami terdahulu",{w:1,hide:1})+
-    F(p+"_hp","No. HP / WhatsApp (opsional)",{type:"tel",inm:"tel"})+
-    F(p+"_email","Email (opsional)",{type:"email"})+
+    F(p+"_hp","No. HP / WhatsApp (opsional, tercetak di N1)",{type:"tel",inm:"tel"})+
+    F(p+"_email","Email (opsional, tercetak di N1)",{type:"email"})+
     F(p+"_alm","Alamat tempat tinggal",{t:"ta",w:1,ph:ALM});
 }
 function ortu(b){
@@ -302,7 +315,7 @@ var pelaksanaan=
   F("kota","Kota/kabupaten (untuk surat)",{val:"Jember"})+F("tsurat","Tanggal surat",{type:"date"});
 var berkas='<div class="chips">'+
   [["n1","N1 &ndash; Pengantar Nikah","2 lembar: suami &amp; istri"],["n2","N2 &ndash; Permohonan Kehendak Nikah","1 lembar"],["n4","N4 &ndash; Persetujuan Calon Pengantin","1 lembar"],["n5","N5 &ndash; Surat Izin Orang Tua","Otomatis, hanya untuk calon pengantin &lt; 21 tahun"],["status","Surat Pernyataan Status","2 lembar: suami &amp; istri, ditempel materai"],["data","Surat Pernyataan Data Calon Suami, Istri, Wali &amp; Saksi","1 lembar, perlu data saksi lengkap"],["wali","Surat Pernyataan Wali Nikah","1 lembar, hanya untuk wali nasab"],["sptjm","SPTJM Catin (Surat Pernyataan Tanggung Jawab Mutlak)","1 lembar, untuk akad kurang dari 10 hari kerja, ditempel materai"],["ktp","Lampiran Fotocopy KTP","1 lembar: KTP yang diunggah otomatis dipotong rapi"]].map(function(x){
-    return '<label class="chip"><input type="checkbox" id="c_'+x[0]+'"><span>'+x[1]+'<small>'+x[2]+'</small></span></label>'}).join("")+'<div class="chipact"><button type="button" id="selAll">Pilih semua berkas</button><button type="button" id="selNone">Kosongkan</button></div><div class="ktpm" id="pilihHint"></div><div class="prev" id="n5info"><b>Status N5 (Surat Izin Orang Tua)</b><small id="n5txt"></small></div></div>';
+    return '<label class="chip"><input type="checkbox" id="c_'+x[0]+'"><span>'+x[1]+'<small>'+x[2]+'</small></span></label>'}).join("")+'<div class="chipact"><button type="button" id="selAll">Pilih semua berkas</button><button type="button" id="selNone">Kosongkan</button></div><div class="ktpm" id="pilihHint"></div><div class="prev nd" id="n5info"><b>Pengecekan otomatis</b><div id="cekList"></div></div><div class="f w" id="kertas_f"><label for="kertas">Ukuran kertas</label><select id="kertas"><option value="A4">A4 (210 × 297 mm)</option><option value="F4">F4 / Folio (215 × 330 mm)</option></select></div></div>';
 
 $("form").innerHTML=
   sec(1,"Data Calon Suami","Beserta wilayah asal",couple("s",true))+
@@ -636,12 +649,31 @@ function mergeKTP(a,b){var o={},k;for(k in a)o[k]=a[k];for(k in b){if(!o[k]||(k=
 function umur(lahir,acuan){if(!lahir||!acuan)return null;var a=parse(lahir),b=parse(acuan),u=b.getFullYear()-a.getFullYear();
   if(b.getMonth()<a.getMonth()||(b.getMonth()===a.getMonth()&&b.getDate()<a.getDate()))u--;return u}
 function acuanUsia(){return V("akad")||V("tsurat")}
-function updN5(){
-  var us=umur(V("s_tgl"),acuanUsia()),ui=umur(V("i_tgl"),acuanUsia()),t=[];
-  if(us===null||ui===null){$("n5txt").textContent="Isi tanggal lahir calon suami, calon istri, dan tanggal akad untuk menentukan apakah N5 dicetak.";return}
-  t.push("Usia calon suami saat akad: "+us+" tahun"+(us<21?" \u2192 N5 dicetak.":" \u2192 N5 tidak perlu."));
-  t.push("Usia calon istri saat akad: "+ui+" tahun"+(ui<21?" \u2192 N5 dicetak.":" \u2192 N5 tidak perlu."));
-  $("n5txt").textContent=t.join(" ")}
+function workdays(a,b){var d=parse(a),e=parse(b),n=0;if(e<=d)return 0;
+  d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
+  while(d<=e){var w=d.getDay();if(w!==0&&w!==6)n++;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)}return n}
+function cekItems(){
+  var it=[],ref=acuanUsia(),us=umur(V("s_tgl"),ref),ui=umur(V("i_tgl"),ref),c=function(k){return $("c_"+k).checked};
+  [[us,"calon suami"],[ui,"calon istri"]].forEach(function(x){var u=x[0];if(u===null)return;
+    if(u<19)it.push({t:"warn",h:"Usia "+x[1]+" saat akad <b>"+u+" tahun</b> (di bawah 19 tahun). Menurut UU Perkawinan batas usia minimal 19 tahun; di bawah itu perlu <b>dispensasi dari Pengadilan Agama</b>."+(c("n5")?" N5 juga dicetak.":" N5 (izin orang tua) juga diperlukan, tetapi belum dicentang.")});
+    else if(u<21){if(c("n5"))it.push({t:"info",h:"Usia "+x[1]+" saat akad "+u+" tahun (di bawah 21 tahun) → N5 dicetak."});
+      else it.push({t:"warn",h:"Usia "+x[1]+" saat akad <b>"+u+" tahun</b> (di bawah 21 tahun) → butuh <b>N5 (surat izin orang tua)</b>, tetapi N5 belum dicentang."})}
+    else if(c("n5"))it.push({t:"info",h:"Usia "+x[1]+" saat akad "+u+" tahun → N5 tidak diperlukan."})});
+  if(c("n5")&&(us===null||ui===null))it.push({t:"info",h:"Isi tanggal lahir calon suami, calon istri, dan tanggal akad untuk menentukan apakah N5 dicetak."});
+  var ts=V("tsurat"),ak=V("akad");
+  if(ts&&ak){
+    if(parse(ak)<=parse(ts))it.push({t:"warn",h:"Tanggal akad harus setelah tanggal surat. Periksa kembali kedua tanggal itu."});
+    else{var wd=workdays(ts,ak);
+      if(wd<10)it.push({t:"warn",h:"Dari tanggal surat sampai akad hanya <b>"+wd+" hari kerja</b> (kurang dari 10 hari kerja; libur nasional belum dihitung). Umumnya perlu <b>dispensasi dari Camat</b> dan <b>SPTJM</b>, jadi tanyakan ke KUA."+(c("sptjm")?" SPTJM sudah dicentang.":""),btn:!c("sptjm")});
+      else if(c("sptjm"))it.push({t:"info",h:"Jarak ke akad "+wd+" hari kerja (sudah 10 hari kerja atau lebih); SPTJM biasanya tidak diperlukan."})}}
+  return it}
+function updN5(){var items=cekItems(),box=$("n5info");
+  if(!items.length){box.classList.add("nd");$("cekList").innerHTML="";return}
+  box.classList.remove("nd");
+  $("cekList").innerHTML=items.map(function(x){return '<div class="cek '+x.t+'">'+x.h+(x.btn?'<br><button type="button" class="cekb" data-chip="sptjm">Centang SPTJM</button>':'')+'</div>'}).join("")}
+$("cekList").addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".cekb");if(!b)return;
+  var c=$("c_"+b.dataset.chip);c.checked=true;c.dispatchEvent(new Event("change",{bubbles:true}))});
+["c_n5","c_sptjm"].forEach(function(id){$(id).addEventListener("change",updN5)});
 ["s_tgl","i_tgl","akad","tsurat"].forEach(function(id){$(id).addEventListener("input",updN5);$(id).addEventListener("change",updN5)});
 updN5();
 
@@ -673,7 +705,8 @@ function msg(t,err,ok){var m=$("msg");m.textContent=t;m.className=err?"err":ok?"
 function bad(id,text){var el=$(id);el.classList.add("bad");el.focus();el.scrollIntoView({block:"center",behavior:"smooth"});return text}
 
 /* ---------- validasi ---------- */
-function validate(){
+var missIds=[];
+function reqIds(){
   var ids=[];
   ["s","i"].forEach(function(p){["desa","kec","kab","nama","nik","tmp","tgl","wn","agm","kerja","stat","alm"].forEach(function(k){ids.push(p+"_"+k)});
     var st=V(p+"_stat");if(st&&st!=="Belum Kawin")ids.push(p+"_lama");});
@@ -690,11 +723,20 @@ function validate(){
   }
   if($("c_wali").checked&&V("w_jenis")==="NASAB"){ids.push("sk1_nama","sk2_nama");if(V("w_hub")!=="AYAH")ids.push("w_alasan")}
   if($("c_data").checked)["sk1","sk2"].forEach(function(k){["nama","nik","tmp","tgl","kerja","alm"].forEach(function(f){ids.push(k+"_"+f)})});
-  for(var i=0;i<ids.length;i++){
-    var fe=$(ids[i]+"_f");if(fe&&fe.classList.contains("nd"))continue;
-    if(!V(ids[i])){var o=OWN[ids[i].split("_")[0]];
-      return bad(ids[i],"Lengkapi dulu: "+(LAB[ids[i]]||ids[i]).replace(/&amp;/g,"&")+(o?" ("+o+")":"")+".")}
-  }
+  return ids}
+function visibleReq(){return reqIds().filter(function(id,i,a){var fe=$(id+"_f");return a.indexOf(id)===i&&!(fe&&fe.classList.contains("nd"))})}
+function missLabel(id){var o=OWN[id.split("_")[0]];return (LAB[id]||id).replace(/&amp;/g,"&").replace(/\s*\(.*?\)\s*$/,function(m){return m.length<40&&/opsional|tulis|16 digit/.test(m)?"":m})+(o?" ("+o+")":"")}
+function renderMiss(){var m=$("msg"),n=missIds.length;
+  var items=missIds.slice(0,14).map(function(id){return '<a href="#" class="miss" data-id="'+id+'">'+esc(missLabel(id))+'</a>'}).join("");
+  m.innerHTML='<b>Belum lengkap: '+n+' kolom wajib.</b> Ketuk untuk menuju kolomnya:<div class="missl">'+items+(n>14?'<span class="missm">dan '+(n-14)+' kolom lain</span>':'')+'</div>';
+  m.className="err"}
+function validate(){
+  missIds=[];
+  visibleReq().forEach(function(id){if(!V(id))missIds.push(id)});
+  if(missIds.length){
+    missIds.forEach(function(id){$(id).classList.add("bad")});
+    var f=$(missIds[0]);f.focus();f.scrollIntoView({block:"center",behavior:"smooth"});
+    return "__MISS__"}
   if(!$("w_jenis_f").classList.contains("nd")&&V("w_jenis")==="NASAB"&&V("w_hub")==="AYAH"&&V("iA_st")!=="ADA")return bad("w_hub","Ayah calon istri berstatus "+V("iA_st").toLowerCase()+", jadi tidak bisa menjadi wali. Pilih wali nasab lain atau Wali Hakim.");
   var niks=["s_nik","i_nik"];
   ["sk1","sk2"].forEach(function(k){if(V(k+"_nik"))niks.push(k+"_nik")});
@@ -707,6 +749,22 @@ function validate(){
   if(!["n1","n2","n4","n5","status","data","wali","sptjm","ktp"].some(function(k){return $("c_"+k).checked}))return "Pilih minimal satu berkas yang akan dicetak.";
   return "";
 }
+
+function refreshReq(){var vis=visibleReq(),set={};
+  vis.forEach(function(id){set[id+"_f"]=1});
+  Array.prototype.forEach.call(document.querySelectorAll("#form .f.req"),function(e){if(!set[e.id])e.classList.remove("req")});
+  vis.forEach(function(id){var e=$(id+"_f");if(e)e.classList.add("req")})}
+function refreshMiss(){if(!$("msg").querySelector(".missl"))return;
+  missIds=visibleReq().filter(function(id){return !V(id)});
+  if(missIds.length)renderMiss();else msg("Semua kolom wajib sudah terisi. Silakan cetak.",false,true)}
+var _rt=null;
+function schedRefresh(e){
+  if(e&&e.target&&e.target.closest&&e.target.closest("#hasil"))return;
+  clearTimeout(_rt);_rt=setTimeout(function(){refreshReq();refreshMiss();
+    if(LAST&&sig()!==LASTSIG)$("hasil").style.display="none"},140)}
+document.addEventListener("input",schedRefresh);document.addEventListener("change",schedRefresh);
+$("msg").addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a.miss");if(!a)return;
+  e.preventDefault();var el=$(a.dataset.id);if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.focus()}});
 
 /* ---------- isian menyesuaikan surat yang dicentang ---------- */
 function needState(){var c=function(k){return $("c_"+k).checked};
@@ -731,6 +789,7 @@ function needId(b,S,any){
     if(k==="desa"||k==="desa_lain")return S.n1||S.status||(S.wali&&o==="i");
     if(k==="kec"||k==="kab")return S.n1;
     if(/^kades/.test(k))return S.n1||(S.wali&&o==="i");
+    if(k==="hp"||k==="email")return S.n1;
     return o==="i"?(id||S.wali):id}
   if(/^[si][AI]$/.test(o)){
     var ay=o.charAt(1)==="A",wa=o==="iA"&&S.wAyah;
@@ -748,8 +807,7 @@ function applyNeed(){
   var S=needState(),any=S.n1||S.n2||S.n4||S.n5||S.status||S.data||S.wali||S.sptjm||S.ktp,i=0;
   Array.prototype.forEach.call(document.querySelectorAll("#form .f[id$='_f']"),function(e){e.classList.toggle("nd",!needId(e.id.slice(0,-2),S,any))});
   [["w_ayah_box",S.data||S.wali],["w_data",S.n2||S.data||S.wali||S.ktp],["w_extra",S.wali]].forEach(function(x){var e=$(x[0]);if(e)e.classList.toggle("nd",!x[1])});
-  $("n5info").classList.toggle("nd",!S.n5);
-  $("pilihHint").textContent=any?"":"Centang surat yang dibutuhkan, isian akan muncul di bawah.";
+  $("pilihHint").textContent=any?"":"Centang surat yang dibutuhkan, isian akan muncul di bawah. Kolom bertanda * wajib diisi.";
   Array.prototype.forEach.call(document.querySelectorAll("#form > fieldset"),function(fs){
     if(fs.querySelector(".chips"))return;
     var h=null,vis=false,tot=false;
@@ -759,7 +817,8 @@ function applyNeed(){
       if(!c.classList.contains("nd")){vis=true;tot=true}});
     end();fs.classList.toggle("nd",!tot)});
   Array.prototype.forEach.call(document.querySelectorAll("#form > fieldset"),function(fs){
-    if(fs.classList.contains("nd"))return;i++;fs.querySelector(".num").textContent=i})}
+    if(fs.classList.contains("nd"))return;i++;fs.querySelector(".num").textContent=i});
+  updN5();refreshReq()}
 ["n1","n2","n4","n5","status","data","wali","sptjm","ktp"].forEach(function(k){$("c_"+k).addEventListener("change",applyNeed)});
 ["w_jenis","w_hub","tempat"].forEach(function(id){$(id).addEventListener("change",applyNeed)});
 $("selAll").addEventListener("click",function(){["n1","n2","n4","n5","status","data","wali","sptjm","ktp"].forEach(function(k){$("c_"+k).checked=true});applyNeed()});
@@ -783,8 +842,9 @@ function tempatAkad(){var t=V("tempat");
 
 /* ---------- PDF ---------- */
 function build(){
-  var J=window.jspdf.jsPDF,d=new J({unit:"mm",format:"a4"});
-  var L=22,R=188,y=14,LH=4.5,FS=10,pg=0;
+  var F4=V("kertas")==="F4",PW=F4?215:210,PH=F4?330:297;
+  var J=window.jspdf.jsPDF,d=new J({unit:"mm",format:F4?[215,330]:"a4"});
+  var L=22,R=PW-22,MID=PW/2,BOT=PH-12,y=14,LH=4.5,FS=10,pg=0;
   var S=C("s"),I=C("i"),SA=O("sA"),SI=O("sI"),IA=O("iA"),II=O("iI");
   S.bin=V("sA_nama");I.bin=V("iA_nama");
   var HB=V("w_hub");
@@ -796,10 +856,10 @@ function build(){
   var sU=umur(S.tgl,acuanUsia())<21,iU=umur(I.tgl,acuanUsia())<21;
 
   function np(){if(pg++)d.addPage();y=14;d.setFont("times","normal");d.setFontSize(FS)}
-  function chk(h){if(y+h>285){d.addPage();y=16}}
+  function chk(h){if(y+h>BOT){d.addPage();y=16}}
   function ctr(s,bold,size,ul){chk(LH+3);d.setFont("times",bold?"bold":"normal");d.setFontSize(size||FS);
-    d.text(s,105,y,{align:"center"});
-    if(ul){var w=d.getTextWidth(s);d.setLineWidth(.3);d.line(105-w/2,y+1,105+w/2,y+1)}
+    d.text(s,MID,y,{align:"center"});
+    if(ul){var w=d.getTextWidth(s);d.setLineWidth(.3);d.line(MID-w/2,y+1,MID+w/2,y+1)}
     d.setFont("times","normal");d.setFontSize(FS);y+=LH+((size||FS)>12?2:.6)}
   function para(s,ind,gap){var x=L+(ind||0);var ls=d.splitTextToSize(s,R-x);chk(ls.length*LH);d.text(ls,x,y);y+=ls.length*LH+(gap==null?1.5:gap)}
   function bold(s,ind){chk(LH+1);d.setFont("times","bold");d.text(s,L+(ind||0),y);d.setFont("times","normal");y+=LH}
@@ -814,7 +874,7 @@ function build(){
     d.setFontSize(9.5);
     ["LAMPIRAN "+lamp,"KEPUTUSAN DIREKTUR JENDERAL BIMBINGAN MASYARAKAT ISLAM","NOMOR 473 TAHUN 2020","TENTANG","PETUNJUK TEKNIS PELAKSANAAN PENCATATAN PERNIKAHAN"].forEach(function(t){d.text(t,L,y);y+=4.2});
     d.setFontSize(FS);y+=2.5;
-    d.text(title,105,y,{align:"center"});y+=LH+1;
+    d.text(title,MID,y,{align:"center"});y+=LH+1;
     d.text("Model "+model,R,y,{align:"right"});y+=LH+2}
   function full(p,male,ind){
     [["Nama lengkap dan alias",U(p.nama)],[male?"Bin":"Binti",U(p.bin)],["Nomor Induk Kependudukan",p.nik],["Tempat dan tanggal lahir",U(p.ttl)],["Kewarganegaraan",U(p.wn)],["Agama",U(p.agm)],["Pekerjaan",U(p.kerja)],["Alamat",U(p.alm)]].forEach(function(x,i){K(x[0],x[1],ind,i+1)})}
@@ -829,26 +889,31 @@ function build(){
   function N1(p,ay,ib,male){
     np();hdr("V","FORMULIR PENGANTAR NIKAH","N1");y+=1;
     kv("KANTOR DESA/KELURAHAN",U(p.desa),{lw:CR});kv("KECAMATAN",U(p.kec),{lw:CR});kv("KABUPATEN/KOTA",U(p.kab),{lw:CR});y+=3;
-    ctr("PENGANTAR NIKAH",false,FS+.5,true);ctr("Nomor : ........................................");y+=2;
+    ctr("PENGANTAR NIKAH",false,FS+.5,true);d.setFont("times","normal");d.setFontSize(FS);d.text("Nomor :",70,y);y+=LH+.6;y+=2;
     para("Yang bertanda tangan di bawah ini menjelaskan dengan sesungguhnya bahwa:",0,.5);
     [["Nama",U(p.nama)],["Nomor Induk Kependudukan (NIK)",p.nik],["Jenis Kelamin",male?"LAKI-LAKI":"PEREMPUAN"],["Tempat dan tanggal lahir",U(p.ttl)],["Kewarganegaraan",U(p.wn)],["Agama",U(p.agm)],["Pekerjaan",U(p.kerja)],["Alamat",U(p.alm)]].forEach(function(x,i){K(x[0],x[1],0,i+1)});
     var stt=U(p.stat)+""+((p.lama&&p.stat!=="Belum Kawin"&&p.stat!=="Jejaka"&&p.stat!=="Perawan")?" ("+U(p.lama)+")":"");
     chk(LH*5);d.text("9.",L,y);d.text("Status pernikahan",L+7,y);d.text(":",L+CR,y);y+=LH;
     d.text("a.  Laki-laki : Jejaka, Duda,",L+7,y);y+=LH;
     d.text("atau beristri ke .....",L+12,y);d.text(":",L+CR,y);d.text(male?stt:"-",L+CR+4,y);y+=LH;
-    d.text("b.  Perempuan : Perawan, Janda",L+7,y);d.text(":",L+CR,y);d.text(male?"-":stt,L+CR+4,y);y+=LH+2;
+    d.text("b.  Perempuan : Perawan, Janda",L+7,y);d.text(":",L+CR,y);d.text(male?"-":stt,L+CR+4,y);y+=LH+(p.hp||p.email?.5:2);
+    var nx=10;
+    if(p.hp){chk(LH);d.text(nx+".",L,y);d.text("Nomor HP / WhatsApp",L+7,y);d.text(":",L+CR,y);d.text(p.hp,L+CR+4,y);y+=LH;nx++}
+    if(p.email){chk(LH);d.text(nx+".",L,y);d.text("Email",L+7,y);d.text(":",L+CR,y);d.text(p.email,L+CR+4,y);y+=LH}
+    if(p.hp||p.email)y+=1.5;
     function rowsA(q){[["Nama Lengkap dan alias",U(q.nama)],["Nomor Induk Kependudukan (NIK)",q.nik],["Tempat dan tanggal lahir",U(q.ttl)],["Kewarganegaraan",U(q.wn)],["Agama",U(q.agm)],["Pekerjaan",U(q.kerja)],["Alamat",U(q.alm)]].forEach(function(x){K(x[0],x[1],0)})}
     para("Adalah benar anak dari pernikahan seorang pria:",0,.5);rowsA(ay);y+=2;
     para("dengan seorang wanita:",0,.5);rowsA(ib);y+=2;
     para("Demikian, surat pengantar ini dibuat dengan mengingat sumpah jabatan dan untuk dipergunakan sebagaimana mestinya.",0,2);
-    chk(40);var cx=R-34;
-    d.text("........................, ....................... 20....",cx,y,{align:"center"});y+=LH;
-    d.text("Kepala Desa/Lurah",cx,y,{align:"center"});y+=18;
+    var oBOT=BOT;BOT=PH-8;chk(37);var cx=R-34;
     var kd=p.kades_nama?[U(p.kades_nama),p.kades_jab||"Kepala Desa"]:null;
+    var dn1=titleCase(U(p.desa).replace(/^(DESA|KELURAHAN|KEL\.?)\s+/,""));
+    d.text((dn1&&tglS)?dn1+", "+tglS:"........................, ....................... 20....",cx,y,{align:"center"});y+=LH;
+    d.text((kd?kd[1]:"Kepala Desa/Lurah")+(dn1?" "+dn1:""),cx,y,{align:"center"});y+=27;
     if(kd){d.setFont("times","bold");d.text(kd[0],cx,y,{align:"center"});
       var wn=d.getTextWidth(kd[0]);d.setLineWidth(.3);d.line(cx-wn/2,y+1,cx+wn/2,y+1);d.setFont("times","normal")}
     else d.text("................................*",cx,y,{align:"center"});
-    d.text("*) nama lengkap",L,y);y+=LH}
+    d.text("*) nama lengkap",L,y);y+=LH;BOT=oBOT}
 
   /* N2 */
   function paraI(s,ind,gap){var w=R-L,f=d.splitTextToSize(s,w-ind)[0],rest=s.slice(f.length).trim(),ls=rest?d.splitTextToSize(rest,w):[];
@@ -881,7 +946,7 @@ function build(){
     ["Surat pengantar nikah dari Desa/Kelurahan","Persetujuan calon mempelai","Fotokopi KTP","Fotokopi akte kelahiran","Fotokopi kartu keluarga","Paspoto 2x3 = 3 lembar berlatar belakang biru",(sU||iU)?"Surat izin orang tua (N5)":"...........................","..........................."].forEach(function(t,i){li(i+1,t)});
     y+=2;paraI("Demikian permohonan ini kami sampaikan, kiranya dapat diperiksa, dihadiri dan dicatat sesuai dengan ketentuan peraturan perundang-undangan.",8,4);
     chk(46);var yy=y;
-    d.text("Diterima tanggal ......................",L,yy);d.text("Wassalam,",130,yy);
+    d.text("Diterima tanggal "+(tglS||"......................"),L,yy);d.text("Wassalam,",130,yy);
     d.text("Yang menerima,",L,yy+LH);d.text("Pemohon",130,yy+LH);
     d.text("Kepala KUA "+preKec(V("kuaKec")),L,yy+LH*2);
     var yn=yy+LH*2+22;
@@ -913,7 +978,7 @@ function build(){
     para("adalah ayah dan ibu kandung/wali/pengampu dari:",0,.5);full(anak,anakMale,4);y+=2;
     para("memberikan izin kepada anak kami untuk melakukan pernikahan dengan:",0,.5);full(pas,!anakMale,4);y+=2;
     para("Demikian surat izin ini di buat dengan kesadaran tanpa ada paksaan dari siapapun dan untuk digunakan seperlunya.",0,3);
-    sign2("Ayah/wali/pengampu",A.st==="ADA"?A.nama:"-","Ibu/wali/pengampu",B.st==="ADA"?B.nama:"-",dateLine)}
+    var oB5=BOT;BOT=PH-8;sign2("Ayah/wali/pengampu",A.st==="ADA"?A.nama:"-","Ibu/wali/pengampu",B.st==="ADA"?B.nama:"-",dateLine);BOT=oB5}
 
   /* SURAT PERNYATAAN STATUS */
   function Status(p,male){
@@ -934,7 +999,10 @@ function build(){
     paraJ("Demikian surat pernyataan ini saya buat, dan saya tanda tangani dengan sebenar-benarnya tanpa ada unsur paksaan dari pihak manapun juga, dan apabila ternyata dikemudian hari surat pernyataan ini tidak benar, maka saya bersedia dituntut di muka Pengadilan sesuai dengan hukum yang berlaku.",10,8);
     chk(60);var cx=R-35;
     d.text(titleCase(U(p.desa))+", "+tglS,cx,y,{align:"center"});y+=LH;
-    d.text("Yang Menyatakan",cx,y,{align:"center"});y+=34;
+    d.text("Yang Menyatakan",cx,y,{align:"center"});
+    d.setLineWidth(.2);d.setLineDashPattern([1,1],0);d.rect(cx-9,y+9,18,11);d.setLineDashPattern([],0);
+    d.setFontSize(7);d.text("Materai",cx,y+13.5,{align:"center"});d.text("Rp.10.000",cx,y+17,{align:"center"});d.setFontSize(11);
+    y+=34;
     d.setFont("times","bold");d.text(U(p.nama),cx,y,{align:"center"});
     var wn3=d.getTextWidth(U(p.nama));d.setLineWidth(.3);d.line(cx-wn3/2,y+1,cx+wn3/2,y+1);d.setFont("times","normal");
     y+=LH;LH=oLH;d.setLineHeightFactor(1.15)}
@@ -984,7 +1052,7 @@ function build(){
     d.text(kota+", "+tglS,R,y,{align:"right"});y+=LH+2;
     var cl=L+30,cr=R-30;d.text("Calon Suami,",cl,y,{align:"center"});d.text("Calon Istri,",cr,y,{align:"center"});y+=5;
     d.setLineWidth(.3);d.setLineDashPattern([1.2,1.2],0);d.rect(93,y,24,16);d.setLineDashPattern([],0);
-    d.setFontSize(8);d.text("Materai",105,y+7,{align:"center"});d.text("Rp10.000",105,y+11,{align:"center"});d.setFontSize(FS);
+    d.setFontSize(8);d.text("Materai",MID,y+7,{align:"center"});d.text("Rp10.000",MID,y+11,{align:"center"});d.setFontSize(FS);
     y+=30;
     d.setFont("times","bold");d.text(d.splitTextToSize(U(S.nama),66),cl,y,{align:"center"});d.text(d.splitTextToSize(U(I.nama),66),cr,y,{align:"center"});
     d.setFont("times","normal");y+=LH*2}
@@ -995,7 +1063,7 @@ function build(){
     ctr("LAMPIRAN FOTOCOPY KTP",true,12);ctr("CATIN, ORANGTUA / WALI DAN SAKSI",true,12);y+=3;
     var ws=(WL&&HB!=="AYAH"&&KTPIMG.w)?"w":"iA";
     var sl=[["s","CATIN LAKI-LAKI"],["i","CATIN PEREMPUAN"],["sA","AYAH CATIN LAKI-LAKI"],[ws,"AYAH CATIN PEREMPUAN / WALI"],["sI","IBU CATIN LAKI-LAKI"],["iI","IBU CATIN PEREMPUAN"],["sk1","SAKSI I"],["sk2","SAKSI II"]];
-    var x0=15,cw=90,rh=Math.min(64,(287-y)/4);
+    var cw=90,x0=(PW-2*cw)/2,rh=Math.min(F4?74:64,(PH-10-y)/4);
     d.setLineWidth(.3);
     sl.forEach(function(q,k){
       var cx0=x0+(k%2)*cw,cy0=y+Math.floor(k/2)*rh;
@@ -1024,7 +1092,7 @@ function build(){
     if(al.length){d.text(al,L+CR+4,y)}y+=Math.max(1,al.length)*LH+3;
     paraI("Demikianlah surat keterangan ini dibuat dengan mengingat sumpah jabatan dan untuk digunakan seperlunya.",8,4);
     chk(95);
-    var cs=[L+22,105,R-22],lb=["WALI NIKAH","SAKSI I","SAKSI II"],nm=[WL.nama,V("sk1_nama"),V("sk2_nama")];
+    var cs=[L+22,MID,R-22],lb=["WALI NIKAH","SAKSI I","SAKSI II"],nm=[WL.nama,V("sk1_nama"),V("sk2_nama")];
     lb.forEach(function(t,i){d.text(t,cs[i],y,{align:"center"})});
     var yn=y+22;
     nm.forEach(function(t,i){d.text(d.splitTextToSize(U(t),52),cs[i],yn,{align:"center"})});
@@ -1052,16 +1120,31 @@ function build(){
   return d.output("blob");
 }
 
+var LAST=null,LASTSIG="";
+function sig(){var o=snapshot(false);return JSON.stringify([o.v,o.c])}
+function saveBlob(L){var a=document.createElement("a");a.href=URL.createObjectURL(L.blob);a.download=L.name;document.body.appendChild(a);a.click();a.remove()}
+$("btnUnduh").addEventListener("click",function(){if(LAST)saveBlob(LAST)});
+$("btnWA").addEventListener("click",function(){
+  if(!LAST)return;var file=null;
+  try{file=new File([LAST.blob],LAST.name,{type:"application/pdf"})}catch(e){}
+  var teks="Assalamu'alaikum, berikut berkas pendaftaran nikah "+V("s_nama")+" & "+V("i_nama")+".";
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:"Berkas Pendaftaran Nikah",text:teks}).catch(function(){});return}
+  saveBlob(LAST);
+  window.open("https://wa.me/?text="+encodeURIComponent(teks+" (File PDF terlampir)"),"_blank");
+  toast("PDF diunduh. Di WhatsApp, lampirkan file PDF tersebut.")});
 $("go").addEventListener("click",function(){
-  var e=validate();if(e){msg(e,true);return}
+  var e=validate();if(e==="__MISS__"){renderMiss();return}if(e){msg(e,true);return}
   if(!window.jspdf){msg("Pustaka PDF belum termuat. Periksa koneksi lalu muat ulang halaman.",true);return}
   var b=$("go");b.disabled=true;msg("Membuat PDF…");
   setTimeout(function(){
     try{
       var blob=build();
       var name="BERKAS_NIKAH_"+V("s_nama").split(/\s+/)[0].toUpperCase()+"_"+V("i_nama").split(/\s+/)[0].toUpperCase()+".pdf";
-      var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
-      msg("PDF siap. Periksa isinya, cetak, lalu tanda tangani.",false,true);
+      LAST={blob:blob,name:name};LASTSIG=sig();saveBlob(LAST);
+      $("hasil").style.display="flex";
+      var wr=cekItems().filter(function(x){return x.t==="warn"}).map(function(x){return x.h.replace(/<[^>]+>/g,"")});
+      msg("PDF siap ("+(V("kertas")==="F4"?"F4":"A4")+"). Periksa isinya, cetak, lalu tanda tangani."+(wr.length?" PERHATIAN: "+wr.join(" "):""),false,true);
     }catch(x){msg("Gagal membuat PDF: "+(x&&x.message||x),true)}
     b.disabled=false;
   },30);
