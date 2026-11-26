@@ -46,7 +46,7 @@ body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 "Inter",system
 .kop-3{font-size:.8rem;opacity:.85}
 
 /* ===== LAYOUT ===== */
-main{max-width:780px;margin:-56px auto 0;padding:0 16px 130px;position:relative}
+main{max-width:780px;margin:-56px auto 0;padding:0 16px 230px;position:relative}
 .intro{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:20px 22px;margin-bottom:18px;border:1px solid var(--line)}
 .badge{display:inline-flex;align-items:center;gap:6px;background:var(--soft);color:var(--ac);font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
 h1{font-size:1.5rem;line-height:1.2;margin:10px 0 6px;letter-spacing:-.01em;text-wrap:balance}
@@ -123,12 +123,14 @@ a.miss{display:inline-block;padding:4px 9px;border-radius:999px;background:var(-
 .missm{align-self:center;font-size:.78rem;opacity:.8}
 .hasil{display:flex;gap:8px;margin-top:8px}
 .hasil button{flex:1;width:auto;margin:0;padding:10px 8px;border-radius:10px;font:700 .85rem system-ui,sans-serif;cursor:pointer;border:1.5px solid #25d366;background:#25d366;color:#052e16}
-.hasil #btnUnduh{background:#fff;color:#111827;border-color:var(--line)}
+.hasil #btnUnduh,.hasil #btnUnduhDocx{background:#fff;color:#111827;border-color:var(--line)}
 .kop{padding-top:54px}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;max-width:92vw;padding:10px 16px;border-radius:10px;background:#12372a;color:#fff;font:600 .85rem/1.35 system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 .ktpv{display:block;max-width:260px;width:100%;margin-top:6px;border:1px solid var(--line);border-radius:8px}
 input.auto,select.auto,textarea.auto{border-color:var(--gold);background:var(--warn)}
 
+.gorow{display:flex;gap:8px}.gorow #go{flex:1}
+.gorow .alt{width:auto;flex:none;padding:8px 16px;line-height:1.15;font-size:.85rem;background:var(--card);color:var(--ac);border:1.5px solid var(--ac);box-shadow:none}
 /* ===== NOTE + ACTION ===== */
 .note{display:flex;gap:12px;background:var(--warn);color:var(--warnx);border:1px solid var(--warnb);border-radius:14px;padding:14px 16px;font-size:.88rem;margin:0 0 18px}
 .note svg{flex:none;margin-top:2px}
@@ -185,23 +187,24 @@ button:disabled{opacity:.6;cursor:wait}
 
 <div class="note">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-  <div>Data hanya diproses di browser ini dan tidak dikirim ke mana pun. Isian tersimpan otomatis di perangkat ini sampai Anda menekan tombol merah "Hapus riwayat inputan" di pojok kanan atas. Foto KTP juga hanya dibaca di perangkat ini; hanya pustaka pembaca teksnya yang diunduh dari internet. Setelah dicetak, periksa kembali semua isian, tanda tangani berkas, lalu serahkan ke KUA. Kolom Nomor dan tanda tangan Kepala Desa/Lurah pada N1 diisi oleh pihak desa. Keabsahan akhir tetap diperiksa oleh KUA.</div>
+  <div>Data hanya diproses di browser ini dan tidak dikirim ke mana pun. Isian tersimpan otomatis di perangkat ini sampai Anda menekan tombol merah "Hapus riwayat inputan" di pojok kanan atas.</div>
 </div>
 </main>
 
 <datalist id="kerja"></datalist>
 
 <div class="bar"><div class="bar-in">
-  <button id="go" type="button">
+  <div class="gorow"><button id="go" type="button">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
     <span>Cetak Berkas Pendaftaran Nikah</span>
-  </button>
+  </button><button id="goDocx" type="button" class="alt" title="Unduh versi Word (.docx) agar bisa diedit">Word<br>.docx</button></div>
   <div id="msg" role="status"></div>
-  <div id="hasil" class="hasil" style="display:none"><button type="button" id="btnWA">Bagikan lewat WhatsApp</button><button type="button" id="btnUnduh">Unduh lagi</button></div>
+  <div id="hasil" style="display:none"><div class="hasil" id="hasilPdf" style="display:none"><button type="button" id="btnWA">WhatsApp (PDF)</button><button type="button" id="btnUnduh">Unduh PDF lagi</button></div><div class="hasil" id="hasilDocx" style="display:none"><button type="button" id="btnWAdocx">WhatsApp (Word)</button><button type="button" id="btnUnduhDocx">Unduh Word lagi</button></div></div>
 </div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@7.1.0/build/index.js"></script>
 <script>
 (function(){
 var $=function(id){return document.getElementById(id)};
@@ -240,6 +243,8 @@ function SAMA(p){var anak=p.charAt(0)==="s"?"calon suami":"calon istri";
   return '<div class="f w" id="'+p+'_same_f"><label class="same"><input type="checkbox" id="'+p+'_same"><span>Sama dengan alamat '+anak+'</span></label></div>'}
 function KJ(p){return F(p+"_kerja","Pekerjaan",{t:"sel",opts:KJO})+F(p+"_kerja_lain","Pekerjaan (tulis sendiri)",{w:1,hide:1,ph:"Tulis pekerjaan"})}
 var DESA=["AMPEL","DUKUHDEMPOK","GLUNDENGAN","KESILIR","LOJEJER","TAMANSARI","TANJUNGREJO"];
+/* dusun per desa (kecamatan Wuluhan): dipakai untuk membetulkan salah baca nama dusun pada alamat hasil scan KTP */
+var DUSUN={DUKUHDEMPOK:["WULUHAN","PURWOJATI","DUKUH","GAWOK"],KESILIR:["KRAJAN","DEMANGAN","TEGALBANTENG"],TANJUNGREJO:["KRAJAN KULON","KRAJAN WETAN","KARANGSONO","GROBYOG"],LOJEJER:["KEPEL","SULAKDORO","KRAJAN","GRINTINGAN"],TAMANSARI:["GONDOSARI","TAMANREJO","KEBONSARI","KRAJAN"],AMPEL:["KRAJAN","SAMBIRINGIK","KEPEL","POMO"],GLUNDENGAN:["KRAJAN","TANJUNGSARI","SUMBERJO"]};
 var DESA_OPTS=DESA.concat([["LAINNYA","Lainnya (tulis sendiri)"]]);
 var ALM="mis. DUSUN KRAJAN KULON, RT 004/RW 001, TANJUNGREJO, WULUHAN, JEMBER";
 function couple(p,male){
@@ -249,6 +254,7 @@ function couple(p,male){
     F(p+"_desa_lain","Nama desa/kelurahan (tulis sendiri)",{w:1,hide:1,ph:"mis. nama desa baru"})+
     F(p+"_kades_nama","Nama Kepala Desa/Lurah (terisi otomatis sesuai desa, bisa diedit)",{w:1,ph:"Tulis nama lengkap beserta gelar"})+
     F(p+"_kades_jab","Jabatan",{t:"sel",w:1,opts:JAB})+
+    F(p+"_nourut","No. urut surat pengantar N1 (opsional, kosongkan bila ditulis tangan)",{w:1,inm:"numeric",max:4,ph:"mis. 045"})+
     H("Data pribadi")+
     F(p+"_nama","Nama lengkap &amp; alias",{w:1,ph:"Sesuai akta kelahiran"})+
     F(p+"_nik","NIK (16 digit)",{inm:"numeric",max:16})+
@@ -423,7 +429,7 @@ function cropKtp(im){
       if(!best||cnt>best.cnt)best={cnt:cnt,x0:x0,y0:y0,x1:x1+1,y1:y1+1}}
     return best}
   function ok(b){if(!b)return false;var bw=b.x1-b.x0,bh=b.y1-b.y0,ar=Math.max(bw,bh)/Math.max(1,Math.min(bw,bh));
-    return bw*bh>=n*.08&&ar>=1.3&&ar<=2.0}
+    return bw*bh>=n*.12&&ar>=1.3&&ar<=1.9}
   var m=new Uint8Array(n),r,g,b,bx=null;
   for(i=0,j=0;j<n;i+=4,j++){r=a[i];g=a[i+1];b=a[i+2];m[j]=(b>=r+18&&b>=g-12&&b>90)?1:0}
   var R1=Math.max(2,Math.round(w/110));
@@ -431,6 +437,33 @@ function cropKtp(im){
   bx=big(dil(m,R1+1));
   if(bx){bx.x0+=R1+1-1;bx.y0+=R1+1-1;bx.x1-=R1+1-1;bx.y1-=R1+1-1}
   var mode="warna";
+  /* kotak awal hanya bagian kartu yang paling biru (bagian bayangan/pudar terlewat): tumbuhkan ke seluruh area berwarna mirip kartu */
+  function grow(b0){
+    var rs=[],gs=[],bs=[],xx,yy,q,k;
+    for(yy=b0.y0;yy<b0.y1;yy++)for(xx=b0.x0;xx<b0.x1;xx++){q=yy*w+xx;if(m[q]){rs.push(a[q*4]);gs.push(a[q*4+1]);bs.push(a[q*4+2])}}
+    if(rs.length<30)return null;
+    function med(v){v.sort(function(p1,p2){return p1-p2});return v[v.length>>1]}
+    var mr=med(rs),mg=med(gs),mb=med(bs);
+    function bl(c){var t=new Float32Array(n),o=new Float32Array(n),R=2,s1,c1,z;
+      for(yy=0;yy<h;yy++)for(xx=0;xx<w;xx++){s1=0;c1=0;for(z=Math.max(0,xx-R);z<=Math.min(w-1,xx+R);z++){s1+=a[(yy*w+z)*4+c];c1++}t[yy*w+xx]=s1/c1}
+      for(yy=0;yy<h;yy++)for(xx=0;xx<w;xx++){s1=0;c1=0;for(z=Math.max(0,yy-R);z<=Math.min(h-1,yy+R);z++){s1+=t[z*w+xx];c1++}o[yy*w+xx]=s1/c1}
+      return o}
+    var br2=bl(0),bg2=bl(1),bb2=bl(2),gm=new Uint8Array(n);
+    for(q=0;q<n;q++)gm[q]=(Math.abs(br2[q]-mr)+Math.abs(bg2[q]-mg)+Math.abs(bb2[q]-mb)<55)?1:0;
+    function inv(v){var o=new Uint8Array(n),z;for(z=0;z<n;z++)o[z]=v[z]?0:1;return o}
+    var cl=inv(dil(inv(dil(gm,4)),4)),op=dil(inv(dil(inv(cl),3)),3);
+    /* komponen yang memuat titik tengah kotak awal */
+    var cx=Math.round((b0.x0+b0.x1)/2),cy=Math.round((b0.y0+b0.y1)/2),st=[],seen=new Uint8Array(n),sp=-1,dx,dy;
+    for(dy=0;dy<=12&&sp<0;dy++)for(dx=-12;dx<=12;dx++){q=(cy+dy)*w+cx+dx;if(cy+dy<h&&cx+dx>=0&&cx+dx<w&&op[q]){sp=q;break}}
+    if(sp<0)return null;
+    var x0=w,y0=h,x1=0,y1=0,px,py;st.push(sp);seen[sp]=1;
+    while(st.length){q=st.pop();px=q%w;py=(q-px)/w;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py;
+      if(px>0&&op[q-1]&&!seen[q-1]){seen[q-1]=1;st.push(q-1)}
+      if(px<w-1&&op[q+1]&&!seen[q+1]){seen[q+1]=1;st.push(q+1)}
+      if(py>0&&op[q-w]&&!seen[q-w]){seen[q-w]=1;st.push(q-w)}
+      if(py<h-1&&op[q+w]&&!seen[q+w]){seen[q+w]=1;st.push(q+w)}}
+    return {x0:Math.min(x0,b0.x0),y0:Math.min(y0,b0.y0),x1:Math.max(x1+1,b0.x1),y1:Math.max(y1+1,b0.y1)}}
+  if(ok(bx)){var gb=grow(bx);bx=(gb&&ok(gb)&&(gb.x1-gb.x0)*(gb.y1-gb.y0)<n*.9)?gb:null}   /* tumbuh gagal/bocor ke latar: anggap tidak terdeteksi (jangan potong sebagian) */
   if(!ok(bx)){
     var br=0,bg=0,bb=0,bc=0,t;
     for(t=0;t<w;t++){[t,(h-1)*w+t].forEach(function(q){br+=a[q*4];bg+=a[q*4+1];bb+=a[q*4+2];bc++})}
@@ -443,20 +476,93 @@ function cropKtp(im){
     if(bx){bx.x0+=R2;bx.y0+=R2;bx.x1-=R2;bx.y1-=R2}
     mode="tepi"}
   var sx,sy,sw,sh;
-  if(ok(bx)){var pd=-Math.round(w*.004);
-    sx=Math.max(0,bx.x0-pd)/sc;sy=Math.max(0,bx.y0-pd)/sc;sw=(Math.min(w,bx.x1+pd)-Math.max(0,bx.x0-pd))/sc;sh=(Math.min(h,bx.y1+pd)-Math.max(0,bx.y0-pd))/sc}
+  if(ok(bx)){var pd=Math.round(Math.max(bx.x1-bx.x0,bx.y1-bx.y0)*.02);   /* ruang ekstra 2% agar tepi KTP tidak terpotong */
+    var X0=Math.max(0,bx.x0-pd),Y0=Math.max(0,bx.y0-pd),X1=Math.min(w,bx.x1+pd),Y1=Math.min(h,bx.y1+pd);
+    sx=X0/sc;sy=Y0/sc;sw=(X1-X0)/sc;sh=(Y1-Y0)/sc;
+    var sb=snapKtpBox(sx,sy,sw,sh,W0,H0);sx=sb[0];sy=sb[1];sw=sb[2];sh=sb[3]}
   else{sx=0;sy=0;sw=W0;sh=H0;mode="utuh"}
-  var rot=sh>sw*1.1,ow=Math.min(1100,Math.round(rot?sh:sw)),oh=Math.round(ow*(rot?sw/sh:sh/sw));
-  var o=document.createElement("canvas");o.width=ow;o.height=oh;var y2=o.getContext("2d");
-  y2.fillStyle="#fff";y2.fillRect(0,0,ow,oh);y2.imageSmoothingQuality="high";
-  if(mode!=="utuh"){var rr=ow*.04;y2.beginPath();y2.moveTo(rr,0);y2.arcTo(ow,0,ow,oh,rr);y2.arcTo(ow,oh,0,oh,rr);y2.arcTo(0,oh,0,0,rr);y2.arcTo(0,0,ow,0,rr);y2.closePath();y2.clip()}
-  if(rot){y2.translate(ow,0);y2.rotate(Math.PI/2);y2.drawImage(im,sx,sy,sw,sh,0,0,oh,ow)}
-  else y2.drawImage(im,sx,sy,sw,sh,0,0,ow,oh);
-  return {url:o.toDataURL("image/jpeg",.9),w:ow,h:oh,mode:mode}}
+  return renderKtp(im,sx,sy,sw,sh,mode)}
+/* Rasio KTP 85,6 x 54 mm. Kotak diperlebar (bukan dipotong) ke rasio itu di sekitar titik tengahnya, supaya tepi kartu tidak terpotong.
+   Tanpa force: kotak yang bentuknya jauh dari KTP dibiarkan apa adanya. */
+function snapKtpBox(sx,sy,sw,sh,IW,IH,force){
+  var r=85.6/54,rr=(sh>sw*1.1)?1/r:r,q=sw/sh;
+  if(!force&&(q<rr*.7||q>rr*1.45))return [sx,sy,sw,sh];
+  var cx=sx+sw/2,cy=sy+sh/2,nw=sw,nh=sh;
+  if(q<rr)nw=sh*rr;else nh=sw/rr;
+  if(nw>IW){nw=IW;nh=nw/rr}if(nh>IH){nh=IH;nw=nh*rr}
+  return [Math.max(0,Math.min(IW-nw,cx-nw/2)),Math.max(0,Math.min(IH-nh,cy-nh/2)),nw,nh]}
+/* kompresi otomatis: hasil potongan KTP dijaga <= ~300 KB (turunkan kualitas JPEG dulu, lalu kecilkan lebar bila perlu) */
+function renderKtp(im,sx,sy,sw,sh,mode){
+  var rot=sh>sw*1.1,MAXB=300*1024,base=Math.min(1100,Math.round(rot?sh:sw)),
+      ws=[base,Math.max(8,Math.round(base*.82)),Math.max(8,Math.round(base*.68))],res=null,wi,q,ow,oh,o,y2,url;
+  for(wi=0;wi<ws.length;wi++){
+    ow=ws[wi];oh=Math.round(ow*(rot?sw/sh:sh/sw));
+    o=document.createElement("canvas");o.width=ow;o.height=oh;y2=o.getContext("2d");
+    y2.fillStyle="#fff";y2.fillRect(0,0,ow,oh);y2.imageSmoothingQuality="high";
+    if(rot){y2.translate(ow,0);y2.rotate(Math.PI/2);y2.drawImage(im,sx,sy,sw,sh,0,0,oh,ow)}
+    else y2.drawImage(im,sx,sy,sw,sh,0,0,ow,oh);
+    for(q=90;q>=50;q-=10){
+      url=o.toDataURL("image/jpeg",q/100);
+      res={url:url,w:ow,h:oh,mode:mode,box:[sx,sy,sw,sh]};
+      if(url.length*.75<=MAXB)return res}}
+  return res}
+var KTPSRC={};
 function saveKtp(p,im,box){
-  var r=cropKtp(im);KTPIMG[p]=r;
+  var r=cropKtp(im);KTPIMG[p]=r;KTPSRC[p]={im:im};
   var pv=$(p+"_ktp_pv");if(!pv){pv=document.createElement("img");pv.id=p+"_ktp_pv";pv.className="ktpv";pv.alt="Hasil potongan KTP";box.parentNode.appendChild(pv)}
-  pv.src=r.url}
+  pv.src=r.url;
+  var bt=$(p+"_ktp_adj");if(!bt){bt=document.createElement("button");bt.type="button";bt.id=p+"_ktp_adj";
+    bt.style.cssText="display:block;margin-top:6px;padding:6px 10px;border:1px solid #0b4d36;background:#fff;color:#0b4d36;border-radius:8px;font:inherit;font-size:13px;cursor:pointer";
+    bt.textContent="\u2702\ufe0f Atur potongan foto";bt.onclick=function(){openCrop(p)};pv.parentNode.appendChild(bt)}}
+/* atur potongan manual: geser sudut/kotak, atau pakai foto utuh */
+function openCrop(p){
+  var src=KTPSRC[p];if(!src)return;var im=src.im,IW=im.naturalWidth,IH=im.naturalHeight;
+  var cur=KTPIMG[p]&&KTPIMG[p].box?KTPIMG[p].box:[0,0,IW,IH];
+  var rc={x:cur[0],y:cur[1],w:cur[2],h:cur[3]};
+  if(!(rc.w>=IW-1&&rc.h>=IH-1)){var s0=snapKtpBox(rc.x,rc.y,rc.w,rc.h,IW,IH);rc={x:s0[0],y:s0[1],w:s0[2],h:s0[3]}}
+  var ov=document.createElement("div");
+  ov.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;gap:10px";
+  var k=Math.min((window.innerWidth-20)/IW,(window.innerHeight-120)/IH,720/IW);
+  var cv=document.createElement("canvas");cv.width=Math.round(IW*k);cv.height=Math.round(IH*k);cv.style.cssText="touch-action:none;border-radius:6px;background:#222";
+  var tx=document.createElement("div");tx.style.cssText="color:#fff;font-size:13px;text-align:center";tx.textContent="Geser sudut kotak putih agar pas mengikuti tepi KTP.";
+  var bar=document.createElement("div");bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
+  function B(t,f,pri){var b=document.createElement("button");b.type="button";b.textContent=t;b.onclick=f;
+    b.style.cssText="padding:9px 14px;border-radius:8px;border:1px solid #fff;font:inherit;font-size:14px;cursor:pointer;"+(pri?"background:#0b4d36;color:#fff":"background:#fff;color:#111");return b}
+  var cx=cv.getContext("2d");
+  function draw(){cx.drawImage(im,0,0,cv.width,cv.height);
+    var X=rc.x*k,Y=rc.y*k,Wd=rc.w*k,Ht=rc.h*k;cx.fillStyle="rgba(0,0,0,.55)";
+    cx.fillRect(0,0,cv.width,Y);cx.fillRect(0,Y+Ht,cv.width,cv.height-Y-Ht);cx.fillRect(0,Y,X,Ht);cx.fillRect(X+Wd,Y,cv.width-X-Wd,Ht);
+    cx.strokeStyle="#fff";cx.lineWidth=2;cx.strokeRect(X,Y,Wd,Ht);cx.fillStyle="#fff";
+    [[X,Y],[X+Wd,Y],[X,Y+Ht],[X+Wd,Y+Ht]].forEach(function(c){cx.fillRect(c[0]-8,c[1]-8,16,16)})}
+  function pt(e){var b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*cv.width/b.width/k,y:(e.clientY-b.top)*cv.height/b.height/k}}
+  var drag=null,MIN=40,lock=true;
+  cv.onpointerdown=function(e){var q=pt(e),tol=28/k,cs=[[rc.x,rc.y,"tl"],[rc.x+rc.w,rc.y,"tr"],[rc.x,rc.y+rc.h,"bl"],[rc.x+rc.w,rc.y+rc.h,"br"]],hit=null,i;
+    for(i=0;i<4;i++)if(Math.abs(q.x-cs[i][0])<tol&&Math.abs(q.y-cs[i][1])<tol){hit=cs[i][2];break}
+    if(hit){var ax=(hit.charAt(1)==="l")?rc.x+rc.w:rc.x,ay=(hit.charAt(0)==="t")?rc.y+rc.h:rc.y;drag={t:"c",ax:ax,ay:ay}}
+    else if(q.x>rc.x&&q.x<rc.x+rc.w&&q.y>rc.y&&q.y<rc.y+rc.h)drag={t:"m",dx:q.x-rc.x,dy:q.y-rc.y};
+    if(drag){cv.setPointerCapture(e.pointerId);e.preventDefault()}};
+  cv.onpointermove=function(e){if(!drag)return;var q=pt(e);q.x=Math.max(0,Math.min(IW,q.x));q.y=Math.max(0,Math.min(IH,q.y));
+    if(drag.t==="c"){
+      if(lock){var rr0=(rc.h>rc.w*1.1)?54/85.6:85.6/54,gx=q.x>=drag.ax?1:-1,gy=q.y>=drag.ay?1:-1,
+            aw=gx>0?IW-drag.ax:drag.ax,ah=gy>0?IH-drag.ay:drag.ay,
+            w1=Math.max(Math.abs(q.x-drag.ax),Math.abs(q.y-drag.ay)*rr0),h1;
+        w1=Math.min(w1,aw,ah*rr0);h1=w1/rr0;
+        if(w1>=MIN&&h1>=MIN){rc.x=gx>0?drag.ax:drag.ax-w1;rc.y=gy>0?drag.ay:drag.ay-h1;rc.w=w1;rc.h=h1}}
+      else{var x0=Math.min(q.x,drag.ax),x1=Math.max(q.x,drag.ax),y0=Math.min(q.y,drag.ay),y1=Math.max(q.y,drag.ay);
+        if(x1-x0>=MIN&&y1-y0>=MIN){rc.x=x0;rc.y=y0;rc.w=x1-x0;rc.h=y1-y0}}}
+    else{rc.x=Math.max(0,Math.min(IW-rc.w,q.x-drag.dx));rc.y=Math.max(0,Math.min(IH-rc.h,q.y-drag.dy))}
+    draw()};
+  cv.onpointerup=cv.onpointercancel=function(){drag=null};
+  function close(){document.body.removeChild(ov)}
+  var bl=B("",function(){lock=!lock;if(lock){var s2=snapKtpBox(rc.x,rc.y,rc.w,rc.h,IW,IH,true);rc={x:s2[0],y:s2[1],w:s2[2],h:s2[3]}}lab();draw()});
+  function lab(){bl.textContent=lock?"Rasio KTP: terkunci":"Potong bebas";
+    tx.textContent=lock?"Geser sudut kotak putih mengikuti tepi KTP. Rasio dikunci 85,6 × 54 agar KTP tercetak ukuran asli.":"Potong bebas: sudut kotak digeser sendiri-sendiri."}
+  bar.appendChild(bl);
+  bar.appendChild(B("Foto utuh",function(){rc={x:0,y:0,w:IW,h:IH};draw()}));
+  bar.appendChild(B("Batal",close));
+  bar.appendChild(B("Simpan",function(){var r=renderKtp(im,rc.x,rc.y,rc.w,rc.h,rc.w>=IW-1&&rc.h>=IH-1?"utuh":"manual");KTPIMG[p]=r;
+    var pv=$(p+"_ktp_pv");if(pv)pv.src=r.url;close()},true));
+  ov.appendChild(tx);ov.appendChild(cv);ov.appendChild(bar);document.body.appendChild(ov);lab();draw()}
 
 /* ---------- upload KTP (OCR di browser) ---------- */
 (function(){
@@ -564,12 +670,50 @@ function parseKTP(text){
   var g=pick(/jenis\s*kelamin\s*[:;.\-]*\s*(\S+)/i)||fz("jeniskelamin").split(/\s/)[0];
   if(/perem/i.test(g))out.jk="P";else if(/laki/i.test(g))out.jk="L";
   else if(/PEREMPUAN/i.test(all))out.jk="P";else if(/LAKI[\s-]*LAKI/i.test(all))out.jk="L";
-  var a=pick(/^\s*alamat\s*[:;.\-]*\s*(.+)/i)||fz("alamat"),rt=all.match(/RT\s*\/?\s*RW\s*[:;.\-]*\s*(\d{1,3})\s*[\/\-]\s*(\d{1,3})/i),
-      desa=pick(/(?:k[eil1|]+\s*\/?\s*d[eo]sa|d[eo]sa\s*\/?\s*k[eil1|]+)\s*[:;.\-]*\s*(.+)/i),kec=pick(/^\s*kecamatan\s*[:;.\-]*\s*(.+)/i),
+  /* alamat: ambil baris "Alamat", lalu sambung baris lanjutan (alamat panjang turun ke baris berikutnya) */
+  function getAddr(){var i,m,j,t,stop=/R[TI1l]\s*\/?\s*R[WV]|k[eil1|]+\s*\/?\s*[dDoO0][eo]?sa|d[eo]sa\s*\/?\s*k[eil1|]|kecamatan|agama|status|pekerjaan|kewarga|berlaku|jenis|gol/i,v="",at=-1;
+    for(i=0;i<L.length;i++){m=L[i].match(/^\s*[aA][li1|][aA]m[aA][tl1]\s*[:;.\-]*\s*(.*)/);if(m){v=ktpClean(m[1]);at=i;break}}
+    if(at<0){for(i=0;i<L.length;i++){j=L[i].search(/[:;]/);if(j<2)continue;t=L[i].slice(0,j).toLowerCase().replace(/[^a-z]/g,"");if(t&&Math.abs(t.length-6)<=2&&lev(t,"alamat")<=2){v=ktpClean(L[i].slice(j+1));at=i;break}}}
+    if(at<0)return "";
+    for(j=at+1;j<=at+2&&j<L.length;j++){t=L[j];if(!t||/[:;]/.test(t)||stop.test(t)||/(^|\D)\d{2,3}\s*[\/\-]\s*\d{2,3}(\D|$)/.test(t)||t.replace(/[^A-Za-z0-9]/g,"").length<3)break;v=(v+" "+ktpClean(t)).trim()}
+    return tidyAddr(v)}
+  /* buang sisa derau di ujung baris (mis. "A7 ER", "= SS") dan rapikan singkatan: JL.BATU -> JL. BATU */
+  function tidyAddr(v){var tk=String(v||"").split(/\s+/).filter(Boolean),ok2=/^(RT|RW|NO|GG|JL|RK|DS|II|IV|VI|IX|XI|XV)$/i;
+    function noise(t){if(/^[^A-Za-z0-9]+$/.test(t)||/[=~_|\u2014\u2013]/.test(t))return true;
+      if(/[A-Za-z]/.test(t)&&/\d/.test(t)&&t.length<=3&&!/^(RT|RW|NO)\.?\d/i.test(t))return true;
+      return /^[A-Za-z]{2}$/.test(t)&&!ok2.test(t)}
+    while(tk.length>1&&noise(tk[tk.length-1]))tk.pop();
+    return tk.join(" ").replace(/\b(JL|JLN|GG|NO|DSN|DS|RT|RW)\.(?=[A-Za-z0-9])/gi,"$1. ").replace(/\s{2,}/g," ").trim()}
+  /* samakan nama wilayah dengan daftar yang dikenal bila hanya beda 1-2 huruf (salah baca OCR) */
+  function canon(v,list){if(!v)return v;var k=v.replace(/^(DESA|KELURAHAN|KEL\.?)\s+/i,"").toUpperCase().trim(),best="",bd=99,mx=Math.max(1,Math.floor(k.length*.22));
+    list.forEach(function(x){var d=lev(k,x);if(d<bd){bd=d;best=x}});return bd<=mx?best:k}   /* tanpa awalan DESA/KELURAHAN: hanya nama wilayah */
+  /* "DUSUN KRAJAM KULOM" -> "DUSUN KRAJAN KULON": hanya kata setelah DUSUN/DSN, dan hanya bila beda 1-2 huruf dari dusun yang dikenal */
+  function fixDusun(v,key){if(typeof DUSUN==="undefined"||!v)return v;
+    var tk=v.split(/\s+/),i,take,pool=[],seen={},best,res=tk.slice();
+    function lists(){var l=[];if(DUSUN[key])l.push(DUSUN[key]);var all=[];for(var d in DUSUN)DUSUN[d].forEach(function(x){if(all.indexOf(x)<0)all.push(x)});l.push(all);return l}
+    function match(str,names){var L=str.length,mx=L>=10?2:(L>=5?1:0),bd=99,bn=[],d;
+      names.forEach(function(nm){d=lev(str,nm.replace(/\s/g,""));if(d<bd){bd=d;bn=[nm]}else if(d===bd&&bn.indexOf(nm)<0)bn.push(nm)});
+      return(bd<=mx&&bn.length===1)?{n:bn[0],d:bd}:null}
+    for(i=0;i<tk.length-1;i++){if(!/^(DUSUN|DUSUM|OUSUN|DSN|DS)\.?$/i.test(tk[i]))continue;
+      var cands=[];
+      for(take=2;take>=1;take--){if(i+take>=tk.length+0&&i+take>tk.length-0)continue;var seg=tk.slice(i+1,i+1+take);if(seg.length<take)continue;
+        if(seg.some(function(z){return /\d/.test(z)||/^(RT|RW|NO)\.?$/i.test(z)}))continue;
+        var str=seg.join("").toUpperCase().replace(/[^A-Z]/g,"");if(str.length<4)continue;
+        var ls=lists(),m=null,q;for(q=0;q<ls.length&&!m;q++)m=match(str,take===2?ls[q].filter(function(nm){return nm.indexOf(" ")>0}):ls[q]);
+        if(m)cands.push({take:take,n:m.n,d:m.d})}
+      if(cands.length){cands.sort(function(x,y){return y.take-x.take||x.d-y.d});var c=cands[0];
+        res.splice.apply(res,[i+1,c.take].concat(c.n.split(" ")));break}}
+    return res.join(" ")}
+  var a=getAddr(),rt=all.match(/R[TI1l]\s*\/?\s*R[WV]\s*[:;.\-]*\s*([0-9OoIl|]{1,3})\s*[\/\-]\s*([0-9OoIl|]{1,3})/i),
+      desa=pick(/(?:k[eil1|]+\s*\/?\s*[dDoO0][eo]sa|d[eo]sa\s*\/?\s*k[eil1|]+)\s*[:;.\-]*\s*(.+)/i)||fz("keldesa")||fz("desakel"),
+      kec=pick(/^\s*kecamatan\s*[:;.\-]*\s*(.+)/i)||fz("kecamatan"),
       kb=pick(/^\s*(?:KABUPATEN|KOTA)\s+(.+)/i);
+  if(!rt){for(var q=0;q<L.length;q++){if(/lahir|berlaku|nik/i.test(L[q]))continue;var rm=L[q].match(/(?:^|\D)(\d{3})\s*\/\s*(\d{3})(?:\D|$)/);if(rm){rt=[0,rm[1],rm[2]];break}}}
+  desa=canon(desa,DESA);kec=canon(kec,["WULUHAN"]);kb=canon(kb,["JEMBER"]);
+  a=fixDusun(a,desa.replace(/^(DESA|KELURAHAN|KEL\.?)\s+/i,"").toUpperCase().trim());
   out.desaKtp=desa.toUpperCase();
   function p3(x){x=String(x);while(x.length<3)x="0"+x;return x}
-  out.alm=[a,rt?"RT "+p3(rt[1])+"/RW "+p3(rt[2]):"",desa,kec,kb].filter(Boolean).join(", ").toUpperCase();
+  out.alm=[a,rt?"RT "+p3(ktpDigits(rt[1]))+"/RW "+p3(ktpDigits(rt[2])):"",desa,kec,kb].filter(Boolean).join(", ").toUpperCase();
   out.agm=(pick(/agama\s*[:;.\-]*\s*(.+)/i)||fz("agama")).toUpperCase();
   out.stat=(pick(/status\s*perk\w*\s*[:;.\-]*\s*(.+)/i)||fz("statusperkawinan")).toUpperCase();
   out.kerja=(pick(/pekerjaan\s*[:;.\-]*\s*(.+)/i)||fz("pekerjaan")).toUpperCase();
@@ -613,6 +757,8 @@ function mergeKTP(a,b){var o={},k;for(k in a)o[k]=a[k];for(k in b){if(!o[k]||(k=
       put("tmp",tc(r.tmp));put("tgl",r.tgl);
     }
     if(!r.nik)warn.push("NIK tidak terbaca");
+    if(!r.alm)warn.push("alamat tidak terbaca, isi manual");
+    else if(!/RT \d+\/RW \d+/.test(r.alm)||!r.desaKtp)warn.push("alamat belum lengkap (RT/RW atau desa tidak terbaca), periksa dan lengkapi");
     if(r.nik&&r.tgl){var ni=nikInfo(r.nik),a=r.tgl.split("-");
       if(ni.d!==+a[2]||ni.m!==+a[1]||ni.y!==(+a[0])%100)warn.push("tanggal lahir di NIK berbeda dengan tanggal lahir yang terbaca, periksa NIK dan tanggal lahir")}
     var jk=r.jk||(r.nik?(nikInfo(r.nik).f?"P":"L"):"");
@@ -761,7 +907,7 @@ var _rt=null;
 function schedRefresh(e){
   if(e&&e.target&&e.target.closest&&e.target.closest("#hasil"))return;
   clearTimeout(_rt);_rt=setTimeout(function(){refreshReq();refreshMiss();
-    if(LAST&&sig()!==LASTSIG)$("hasil").style.display="none"},140)}
+    if((LAST||LASTD)&&sig()!==LASTSIG){LAST=null;LASTD=null;showHasil()}},140)}
 document.addEventListener("input",schedRefresh);document.addEventListener("change",schedRefresh);
 $("msg").addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a.miss");if(!a)return;
   e.preventDefault();var el=$(a.dataset.id);if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.focus()}});
@@ -784,10 +930,12 @@ function needId(b,S,any){
   if(b==="mahar")return S.n2||S.data;
   if(b==="modin")return S.data;
   if(o==="s"||o==="i"){
-    if(k==="nama"||k==="ktp")return o==="i"?oth:(id||S.n2);
+    if(k==="ktp")return o==="i"?(id||S.wali):id;   /* upload KTP hanya bila ada data lain yang bisa diisi otomatis (bukan N2 saja) */
+    if(k==="nama")return o==="i"?oth:(id||S.n2);
     if(k==="stat"||k==="lama"||k==="sebab")return S.n1||S.status;
     if(k==="desa"||k==="desa_lain")return S.n1||S.status||(S.wali&&o==="i");
     if(k==="kec"||k==="kab")return S.n1;
+    if(k==="nourut")return S.n1;
     if(/^kades/.test(k))return S.n1||(S.wali&&o==="i");
     if(k==="hp"||k==="email")return S.n1;
     return o==="i"?(id||S.wali):id}
@@ -827,11 +975,19 @@ applyNeed();
 
 /* ---------- data ---------- */
 function ttlOf(p){var t=V(p+"_tmp"),g=V(p+"_tgl");return (t&&g)?U(t)+", "+tgl(g):(t||"")}
-function C(p){var o={};["desa","kec","kab","nama","bin","nik","tmp","tgl","wn","agm","kerja","stat","sebab","lama","hp","email","alm","kades_nama","kades_jab"].forEach(function(k){o[k]=V(p+"_"+k)});o.ttl=(o.tmp&&o.tgl)?U(o.tmp)+", "+tgl(o.tgl):"";return o}
+function C(p){var o={};["desa","kec","kab","nama","bin","nik","tmp","tgl","wn","agm","kerja","stat","sebab","lama","hp","email","alm","kades_nama","kades_jab","nourut"].forEach(function(k){o[k]=V(p+"_"+k)});o.ttl=(o.tmp&&o.tgl)?U(o.tmp)+", "+tgl(o.tgl):"";return o}
+/* Nomor surat pengantar N1: 400.12.3.2 / no.urut / 35.09.11.<kode desa> / tahun. No. urut dikosongkan (ditulis tangan) bila tidak diisi */
+var KODE_DESA={LOJEJER:"2001",AMPEL:"2002",TAMANSARI:"2003",DUKUHDEMPOK:"2004",GLUNDENGAN:"2005",TANJUNGREJO:"2006",KESILIR:"2007"};
+function nomorN1(p){
+  var k=U(p.desa).replace(/^(DESA|KELURAHAN|KEL\.?)\s+/,"").replace(/\s+/g," "),kode=KODE_DESA[k],
+      th=($("tsurat").value||"").slice(0,4)||String(new Date().getFullYear()),u=(p.nourut||"").trim();
+  return "400.12.3.2/"+(u||"..........")+"/"+(kode?"35.09.11."+kode:"......................")+"/"+th}
 function O(p){var st=V(p+"_st")||"ADA",on=st==="ADA";var o={st:st,wn:on?"Indonesia":"",agm:on?"Islam":""};
   ["nama","bin","nik","kerja","alm"].forEach(function(k){o[k]=(on||k==="nama")?V(p+"_"+k):""});o.ttl=on?ttlOf(p):"";
-  if(st==="MENINGGAL")o.nama=o.nama+(p.charAt(1)==="A"?" (ALM)":" (ALMH)");
-  if(st==="TIDAK DIKETAHUI")o.nama=o.nama+" (TIDAK DIKETAHUI)";
+  /* keterangan di belakang nama ayah/ibu: meninggal -> (ALM), tidak diketahui -> (MAFQUD); tidak ditambah dua kali bila sudah diketik */
+  function tagNama(n,t){return /\((ALM|ALMH|MAFQUD)\)\s*$/i.test(n)?n:(n+" ("+t+")").trim()}
+  if(st==="MENINGGAL")o.nama=tagNama(o.nama,p.charAt(1)==="A"?"ALM":"ALMH");   /* ayah (ALM), ibu (ALMH) */
+  if(st==="TIDAK DIKETAHUI")o.nama=tagNama(o.nama,"MAFQUD");
   return o}
 function preKab(s){s=U(s);return /^(KAB|KOTA)/.test(s)?s:"KABUPATEN "+s}
 function preKec(s){s=U(s);return /^KEC/.test(s)?s:"KECAMATAN "+s}
@@ -853,7 +1009,7 @@ function build(){
   var tglS=$("tsurat").value?tgl($("tsurat").value):"",kota=V("kota");
   var dateLine=U(kota+", "+tglS);
   var KEPALA=U(V("kepKua")),NIPK=V("nipKua");
-  var sU=umur(S.tgl,acuanUsia())<21,iU=umur(I.tgl,acuanUsia())<21;
+  var us0=umur(S.tgl,acuanUsia()),ui0=umur(I.tgl,acuanUsia()),sU=us0!==null&&us0<21,iU=ui0!==null&&ui0<21;   /* null (tanggal lahir/akad kosong) bukan "di bawah 21" */
 
   function np(){if(pg++)d.addPage();y=14;d.setFont("times","normal");d.setFontSize(FS)}
   function chk(h){if(y+h>BOT){d.addPage();y=16}}
@@ -889,7 +1045,7 @@ function build(){
   function N1(p,ay,ib,male){
     np();hdr("V","FORMULIR PENGANTAR NIKAH","N1");y+=1;
     kv("KANTOR DESA/KELURAHAN",U(p.desa),{lw:CR});kv("KECAMATAN",U(p.kec),{lw:CR});kv("KABUPATEN/KOTA",U(p.kab),{lw:CR});y+=3;
-    ctr("PENGANTAR NIKAH",false,FS+.5,true);d.setFont("times","normal");d.setFontSize(FS);d.text("Nomor :",70,y);y+=LH+.6;y+=2;
+    ctr("PENGANTAR NIKAH",false,FS+.5,true);d.setFont("times","normal");d.setFontSize(FS);var nt="Nomor : "+nomorN1(p);d.text(nt,(d.internal.pageSize.getWidth()-d.getTextWidth(nt))/2,y);y+=LH+.6;y+=2;
     para("Yang bertanda tangan di bawah ini menjelaskan dengan sesungguhnya bahwa:",0,.5);
     [["Nama",U(p.nama)],["Nomor Induk Kependudukan (NIK)",p.nik],["Jenis Kelamin",male?"LAKI-LAKI":"PEREMPUAN"],["Tempat dan tanggal lahir",U(p.ttl)],["Kewarganegaraan",U(p.wn)],["Agama",U(p.agm)],["Pekerjaan",U(p.kerja)],["Alamat",U(p.alm)]].forEach(function(x,i){K(x[0],x[1],0,i+1)});
     var stt=U(p.stat)+""+((p.lama&&p.stat!=="Belum Kawin"&&p.stat!=="Jejaka"&&p.stat!=="Perawan")?" ("+U(p.lama)+")":"");
@@ -995,7 +1151,7 @@ function build(){
     else if(sb==="CERAI MATI")t=awal+"pernah menikah / kawin dan berstatus "+(cer?sb:st+" "+sb)+" karena "+pas+" saya"+(lm?", "+lm+",":"")+" telah meninggal dunia,"+akhir;
     else t=awal+"pernah menikah / kawin dan berstatus "+(cer?sb:st+(sb?" "+sb:""))+(lm?" dengan "+pas+" terdahulu saya, "+lm+",":"")+akhir;
     paraJ(t,10,5);
-    paraJ("Apabila dikemudian hari pernyataan saya tidak benar / palsu, maka saya bersedia dituntut sesuai dengan hukum yang berlaku (Pasal 264 Ayat 2 KUHP. Jo 15 UU No. 1 /1974).",10,5);
+    paraJ("Apabila dikemudian hari pernyataan saya tidak benar / palsu, maka saya bersedia dituntut sesuai dengan hukum yang berlaku (Pasal 392 Ayat 2 UU No. 1 Tahun 2023 tentang KUHP. Jo 15 UU No. 1 /1974).",10,5);
     paraJ("Demikian surat pernyataan ini saya buat, dan saya tanda tangani dengan sebenar-benarnya tanpa ada unsur paksaan dari pihak manapun juga, dan apabila ternyata dikemudian hari surat pernyataan ini tidak benar, maka saya bersedia dituntut di muka Pengadilan sesuai dengan hukum yang berlaku.",10,8);
     chk(60);var cx=R-35;
     d.text(titleCase(U(p.desa))+", "+tglS,cx,y,{align:"center"});y+=LH;
@@ -1063,16 +1219,18 @@ function build(){
     ctr("LAMPIRAN FOTOCOPY KTP",true,12);ctr("CATIN, ORANGTUA / WALI DAN SAKSI",true,12);y+=3;
     var ws=(WL&&HB!=="AYAH"&&KTPIMG.w)?"w":"iA";
     var sl=[["s","CATIN LAKI-LAKI"],["i","CATIN PEREMPUAN"],["sA","AYAH CATIN LAKI-LAKI"],[ws,"AYAH CATIN PEREMPUAN / WALI"],["sI","IBU CATIN LAKI-LAKI"],["iI","IBU CATIN PEREMPUAN"],["sk1","SAKSI I"],["sk2","SAKSI II"]];
-    var cw=90,x0=(PW-2*cw)/2,rh=Math.min(F4?74:64,(PH-10-y)/4);
+    var cw=90,x0=(PW-2*cw)/2,rh=Math.min(F4?74:64,(PH-10-y)/4),KW=85.6,KH=54,tr=KW/KH;   /* KTP dicetak ukuran asli: 85,6 x 54 mm */
     d.setLineWidth(.3);
     sl.forEach(function(q,k){
       var cx0=x0+(k%2)*cw,cy0=y+Math.floor(k/2)*rh;
       d.setDrawColor(0);d.rect(cx0,cy0,cw,rh);
-      var im=KTPIMG[q[0]];
-      if(im){var mw=cw-14,mh=rh-14,sc=Math.min(mw/im.w,mh/im.h),iw=im.w*sc,ih=im.h*sc,ix=cx0+(cw-iw)/2,iy=cy0+3+(mh-ih)/2+1;
+      var im=KTPIMG[q[0]],zone=rh-8;
+      if(im){var iw,ih,sc,rr=im.w/im.h;
+        if(Math.abs(rr/tr-1)<.1){iw=KW;ih=KH}else{sc=Math.min(KW/im.w,KH/im.h);iw=im.w*sc;ih=im.h*sc}
+        var ix=cx0+(cw-iw)/2,iy=cy0+Math.max(.8,(zone-ih)/2);
         d.addImage(im.url,"JPEG",ix,iy,iw,ih,undefined,"FAST");
-        d.setDrawColor(170);d.setLineWidth(.15);d.roundedRect(ix,iy,iw,ih,im.mode==="utuh"?0:iw*.035,im.mode==="utuh"?0:iw*.035);d.setDrawColor(0);d.setLineWidth(.3)}
-      d.setFont("times","bold");d.setFontSize(FS);d.text(q[1],cx0+cw/2,cy0+rh-3.5,{align:"center"});d.setFont("times","normal")});
+        d.setDrawColor(170);d.setLineWidth(.15);d.rect(ix,iy,iw,ih);d.setDrawColor(0);d.setLineWidth(.3)}
+      d.setFont("times","bold");d.setFontSize(FS-2);d.text(q[1],cx0+cw/2,cy0+rh-2.8,{align:"center"});d.setFontSize(FS);d.setFont("times","normal")});
     y+=rh*4+2}
 
   /* SURAT WALI NIKAH */
@@ -1120,19 +1278,26 @@ function build(){
   return d.output("blob");
 }
 
-var LAST=null,LASTSIG="";
+var LAST=null,LASTD=null,LASTSIG="";
+var MIME_DOCX="application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 function sig(){var o=snapshot(false);return JSON.stringify([o.v,o.c])}
+/* file PDF dan Word sama-sama diingat; bila isian berubah, keduanya dianggap kedaluwarsa */
+function stamp(){var g=sig();if(g!==LASTSIG){LAST=null;LASTD=null;LASTSIG=g}}
+function showHasil(){$("hasilPdf").style.display=LAST?"flex":"none";$("hasilDocx").style.display=LASTD?"flex":"none";$("hasil").style.display=(LAST||LASTD)?"block":"none"}
 function saveBlob(L){var a=document.createElement("a");a.href=URL.createObjectURL(L.blob);a.download=L.name;document.body.appendChild(a);a.click();a.remove()}
-$("btnUnduh").addEventListener("click",function(){if(LAST)saveBlob(LAST)});
-$("btnWA").addEventListener("click",function(){
-  if(!LAST)return;var file=null;
-  try{file=new File([LAST.blob],LAST.name,{type:"application/pdf"})}catch(e){}
+function waShare(L,mime,jenis){
+  if(!L)return;var file=null;
+  try{file=new File([L.blob],L.name,{type:mime})}catch(e){}
   var teks="Assalamu'alaikum, berikut berkas pendaftaran nikah "+V("s_nama")+" & "+V("i_nama")+".";
   if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
     navigator.share({files:[file],title:"Berkas Pendaftaran Nikah",text:teks}).catch(function(){});return}
-  saveBlob(LAST);
-  window.open("https://wa.me/?text="+encodeURIComponent(teks+" (File PDF terlampir)"),"_blank");
-  toast("PDF diunduh. Di WhatsApp, lampirkan file PDF tersebut.")});
+  saveBlob(L);
+  window.open("https://wa.me/?text="+encodeURIComponent(teks+" (File "+jenis+" terlampir)"),"_blank");
+  toast(jenis+" diunduh. Di WhatsApp, lampirkan file "+jenis+" tersebut.")}
+$("btnUnduh").addEventListener("click",function(){if(LAST)saveBlob(LAST)});
+$("btnUnduhDocx").addEventListener("click",function(){if(LASTD)saveBlob(LASTD)});
+$("btnWA").addEventListener("click",function(){waShare(LAST,"application/pdf","PDF")});
+$("btnWAdocx").addEventListener("click",function(){waShare(LASTD,MIME_DOCX,"Word")});
 $("go").addEventListener("click",function(){
   var e=validate();if(e==="__MISS__"){renderMiss();return}if(e){msg(e,true);return}
   if(!window.jspdf){msg("Pustaka PDF belum termuat. Periksa koneksi lalu muat ulang halaman.",true);return}
@@ -1141,14 +1306,192 @@ $("go").addEventListener("click",function(){
     try{
       var blob=build();
       var name="BERKAS_NIKAH_"+V("s_nama").split(/\s+/)[0].toUpperCase()+"_"+V("i_nama").split(/\s+/)[0].toUpperCase()+".pdf";
-      LAST={blob:blob,name:name};LASTSIG=sig();saveBlob(LAST);
-      $("hasil").style.display="flex";
+      stamp();LAST={blob:blob,name:name};saveBlob(LAST);showHasil();
       var wr=cekItems().filter(function(x){return x.t==="warn"}).map(function(x){return x.h.replace(/<[^>]+>/g,"")});
       msg("PDF siap ("+(V("kertas")==="F4"?"F4":"A4")+"). Periksa isinya, cetak, lalu tanda tangani."+(wr.length?" PERHATIAN: "+wr.join(" "):""),false,true);
     }catch(x){msg("Gagal membuat PDF: "+(x&&x.message||x),true)}
     b.disabled=false;
   },30);
 });
+
+/* ---------- WORD (.docx): isi sama dengan PDF, tetapi bisa diedit ---------- */
+function buildDocx(){
+  var D=window.docx,AL=D.AlignmentType,F4=V("kertas")==="F4",FONT="Times New Roman",kids=[],ktpKids=[];
+  var S=C("s"),I=C("i"),SA=O("sA"),SI=O("sI"),IA=O("iA"),II=O("iI");S.bin=V("sA_nama");I.bin=V("iA_nama");
+  var HB=V("w_hub"),WL=V("w_jenis")==="HAKIM"?null:(HB==="AYAH"?IA:O("w")),HAKT=V("w_jenis")==="HAKIM"?U(V("w_hakim")):"";
+  var HUB=HB==="LAIN"?V("w_hub_lain"):(WALI.filter(function(x){return x[0]===HB})[0]||["",""])[1];
+  var tglS=$("tsurat").value?tgl($("tsurat").value):"",kota=V("kota"),dateLine=U(kota+", "+tglS),KEPALA=U(V("kepKua")),NIPK=V("nipKua");
+  var us=umur(S.tgl,acuanUsia()),ui=umur(I.tgl,acuanUsia()),sU=us!==null&&us<21,iU=ui!==null&&ui<21;
+  var TW=(F4?12189:11906)-2494,NB={style:D.BorderStyle.NONE,size:0,color:"FFFFFF"},NBS={top:NB,bottom:NB,left:NB,right:NB};
+  function tc2(x){return x.toLowerCase().replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase()})}
+  function b64(u){var s=atob(u.split(",")[1]),a=new Uint8Array(s.length),i;for(i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a}
+  function R(s,o){o=o||{};return new D.TextRun({text:String(s==null?"":s),bold:!!o.b,size:o.sz||20,font:FONT,underline:o.u?{}:undefined})}
+  function P(s,o){o=o||{};return new D.Paragraph({children:[].concat(typeof s==="string"?R(s,o):s),alignment:o.al,
+    spacing:{before:o.bf||0,after:o.af==null?60:o.af},indent:(o.ind||o.fl)?{left:o.ind||0,firstLine:o.fl||0}:undefined,pageBreakBefore:!!o.pb})}
+  function T0(s,o){o=o||{};o.pb=kids.length>0;return P(s,o)}   /* paragraf pertama tiap surat: mulai halaman baru */
+  function Cell(ch,w){return new D.TableCell({children:ch,width:{size:w,type:D.WidthType.DXA},borders:NBS})}
+  function Tbl(rows,ws){return new D.Table({rows:rows,width:{size:ws.reduce(function(a,b){return a+b},0),type:D.WidthType.DXA},columnWidths:ws,
+    borders:{top:NB,bottom:NB,left:NB,right:NB,insideHorizontal:NB,insideVertical:NB}})}
+  function KV(rows,o){o=o||{};var i0=o.ind||0,nm=!!o.num,lw=o.lw||3300,sz=o.sz,ws=[];
+    if(i0)ws.push(i0);if(nm)ws.push(420);ws.push(lw,260);var vw=TW-ws.reduce(function(a,b){return a+b},0);ws.push(vw);
+    return Tbl(rows.map(function(r,i){var c=[];
+      if(i0)c.push(Cell([P("",{af:0})],i0));if(nm)c.push(Cell([P((i+1)+".",{af:20,sz:sz})],420));
+      c.push(Cell([P(r[0],{af:20,sz:sz})],lw),Cell([P(":",{af:20,sz:sz})],260),Cell([P((r[1]==null||r[1]==="")?"-":r[1],{af:20,sz:sz})],vw));
+      return new D.TableRow({children:c,cantSplit:true})}),ws)}
+  function Sign(cols){var w=Math.floor(TW/cols.length);
+    return Tbl([new D.TableRow({cantSplit:true,children:cols.map(function(c){
+      var ch=(c.top||[]).map(function(t){return P(t,{al:AL.CENTER,af:0})});
+      ch.push(c.box?P("(Materai Rp10.000)",{al:AL.CENTER,sz:16,bf:360,af:360}):P("",{bf:c.name!=null?840:0,af:0}));
+      if(c.name!=null)ch.push(P(c.name||"........................",{al:AL.CENTER,b:1,u:c.u,af:0}));
+      (c.after||[]).filter(Boolean).forEach(function(t){ch.push(P(t,{al:AL.CENTER,af:0}))});
+      return Cell(ch,w)})})],cols.map(function(){return w}))}
+  function hdr(lamp,title,model){
+    ["LAMPIRAN "+lamp,"KEPUTUSAN DIREKTUR JENDERAL BIMBINGAN MASYARAKAT ISLAM","NOMOR 473 TAHUN 2020","TENTANG","PETUNJUK TEKNIS PELAKSANAAN PENCATATAN PERNIKAHAN"]
+      .forEach(function(t,i){kids.push(i?P(t,{sz:19,af:0}):T0(t,{sz:19,af:0}))});
+    kids.push(P(title,{al:AL.CENTER,bf:160,af:40}),P("Model "+model,{al:AL.RIGHT,af:120}))}
+  function FULL(p,male){return [["Nama lengkap dan alias",U(p.nama)],[male?"Bin":"Binti",U(p.bin)],["Nomor Induk Kependudukan",p.nik],["Tempat dan tanggal lahir",U(p.ttl)],["Kewarganegaraan",U(p.wn)],["Agama",U(p.agm)],["Pekerjaan",U(p.kerja)],["Alamat",U(p.alm)]]}
+  function ORTU(q){return [["Nama Lengkap dan alias",U(q.nama)],["Nomor Induk Kependudukan (NIK)",q.nik],["Tempat dan tanggal lahir",U(q.ttl)],["Kewarganegaraan",U(q.wn)],["Agama",U(q.agm)],["Pekerjaan",U(q.kerja)],["Alamat",U(q.alm)]]}
+  function JUD(t,sz){kids.push(T0(t,{al:AL.CENTER,b:1,u:1,sz:sz||22,af:160}))}
+  function J(t,sz){kids.push(P(t,{al:AL.JUSTIFIED,fl:567,af:100,sz:sz}))}
+
+  function N1(p,ay,ib,male){
+    hdr("V","FORMULIR PENGANTAR NIKAH","N1");
+    kids.push(KV([["KANTOR DESA/KELURAHAN",U(p.desa)],["KECAMATAN",U(p.kec)],["KABUPATEN/KOTA",U(p.kab)]]));
+    kids.push(P("PENGANTAR NIKAH",{al:AL.CENTER,u:1,sz:21,bf:200,af:0}),P("Nomor : "+nomorN1(p),{al:AL.CENTER,af:120}),
+      P("Yang bertanda tangan di bawah ini menjelaskan dengan sesungguhnya bahwa:",{af:40}));
+    var stt=U(p.stat)+((p.lama&&p.stat!=="Belum Kawin")?" ("+U(p.lama)+")":"");
+    var rows=[["Nama",U(p.nama)],["Nomor Induk Kependudukan (NIK)",p.nik],["Jenis Kelamin",male?"LAKI-LAKI":"PEREMPUAN"],["Tempat dan tanggal lahir",U(p.ttl)],["Kewarganegaraan",U(p.wn)],["Agama",U(p.agm)],["Pekerjaan",U(p.kerja)],["Alamat",U(p.alm)],
+      ["Status pernikahan",(male?"Laki-laki (Jejaka, Duda, atau beristri ke ...) : ":"Perempuan (Perawan, Janda) : ")+stt]];
+    if(p.hp)rows.push(["Nomor HP / WhatsApp",p.hp]);if(p.email)rows.push(["Email",p.email]);
+    kids.push(KV(rows,{num:1}),P("Adalah benar anak dari pernikahan seorang pria:",{bf:100,af:40}),KV(ORTU(ay)),
+      P("dengan seorang wanita:",{bf:100,af:40}),KV(ORTU(ib)),
+      P("Demikian, surat pengantar ini dibuat dengan mengingat sumpah jabatan dan untuk dipergunakan sebagaimana mestinya.",{al:AL.JUSTIFIED,fl:567,bf:100,af:100}));
+    var kd=p.kades_nama?[U(p.kades_nama),p.kades_jab||"Kepala Desa"]:null,dn=tc2(U(p.desa).replace(/^(DESA|KELURAHAN|KEL\.?)\s+/,""));
+    kids.push(Sign([{},{top:[(dn&&tglS)?dn+", "+tglS:"........................, ....................... 20....",(kd?kd[1]:"Kepala Desa/Lurah")+(dn?" "+dn:"")],name:kd?kd[0]:"................................*",u:!!kd}]),
+      P("*) nama lengkap",{sz:18}))}
+
+  function N2(){
+    hdr("VI","FORMULIR PERMOHONAN KEHENDAK NIKAH","N2");
+    kids.push(Tbl([new D.TableRow({children:[Cell([P("Perihal : Permohonan kehendak nikah",{af:0})],TW-3300),Cell([P(dateLine,{al:AL.RIGHT,af:0})],3300)]})],[TW-3300,3300]),
+      P("Kepada yth,",{bf:160,af:0}),P("Kepala KUA "+preKec(V("kuaKec")),{af:0}),P("di "+U(V("kuaKab")),{af:120}),
+      P("Dengan hormat, kami mengajukan permohonan kehendak nikah untuk atas nama :",{al:AL.JUSTIFIED,fl:567,af:60}),
+      KV([["Calon suami",U(S.nama)],["Calon istri",U(I.nama)],["Wali nikah",WL?U(WL.nama):"WALI HAKIM"+(HAKT?" ("+HAKT+")":"")],["Hari dan tanggal",hariTgl($("akad").value).toUpperCase()],
+        ["Jam akad",V("jam").replace(":",".")+" WIB"],["Mas kawin",U(V("mahar"))],["Tempat akad nikah",tempatAkad()]],{lw:2400}),
+      P("Bersama ini kami sampaikan surat-surat yang diperlukan untuk diperiksa sebagai berikut:",{al:AL.JUSTIFIED,fl:567,bf:100,af:40}));
+    ["Surat pengantar nikah dari Desa/Kelurahan","Persetujuan calon mempelai","Fotokopi KTP","Fotokopi akte kelahiran","Fotokopi kartu keluarga","Paspoto 2x3 = 3 lembar berlatar belakang biru",(sU||iU)?"Surat izin orang tua (N5)":"...........................","..........................."]
+      .forEach(function(t,i){kids.push(P((i+1)+".  "+t,{ind:567,af:20}))});
+    kids.push(P("Demikian permohonan ini kami sampaikan, kiranya dapat diperiksa, dihadiri dan dicatat sesuai dengan ketentuan peraturan perundang-undangan.",{al:AL.JUSTIFIED,fl:567,bf:100,af:200}),
+      Sign([{top:["Diterima tanggal "+(tglS||"......................"),"Yang menerima,","Kepala KUA "+preKec(V("kuaKec"))],name:KEPALA||"..............................",u:!!KEPALA,after:[NIPK?"NIP. "+NIPK:(KEPALA?"":"NIP. ..............................")]},
+        {top:["Wassalam,","Pemohon",""],name:U(S.nama)}]))}
+
+  function N4(){
+    hdr("VIII","FORMULIR PERSETUJUAN CALON PENGANTIN","N4");
+    kids.push(P("PERSETUJUAN CALON PENGANTIN",{al:AL.CENTER,u:1,sz:21,bf:100,af:120}),P("Yang bertanda tangan di bawah ini:"),
+      P("A.  Calon suami:"),KV(FULL(S,true),{num:1,ind:360}),P("B.  Calon Istri:",{bf:100}),KV(FULL(I,false),{num:1,ind:360}),
+      P("Menyatakan dengan sesungguhnya bahwa atas dasar suka rela, dengan kesadaran sendiri, tanpa ada paksaan dari siapapun juga, setuju untuk melangsungkan pernikahan.",{al:AL.JUSTIFIED,fl:567,bf:120}),
+      P("Demikian surat persetujuan ini di buat untuk digunakan seperlunya.",{fl:567,af:200}),
+      P(dateLine,{al:AL.RIGHT,af:100}),Sign([{top:["Calon Suami"],name:U(S.nama)},{top:["Calon Istri"],name:U(I.nama)}]))}
+
+  function N5(A,B,anak,pas,anakMale){
+    hdr("IX","FORMULIR SURAT IZIN ORANG TUA","N5");
+    kids.push(P("SURAT IZIN ORANG TUA",{al:AL.CENTER,u:1,sz:21,bf:100,af:120}),P("Yang bertanda tangan di bawah ini:"),
+      P("A."),KV(FULL(A,true),{num:1,ind:360}),P("B.",{bf:100}),
+      KV([["Nama lengkap dan alias",U(B.nama)],["Binti",U(B.bin)],["Tempat dan tanggal lahir",U(B.ttl)],["Kewarganegaraan",U(B.wn)],["Agama",U(B.agm)],["Pekerjaan",U(B.kerja)],["Alamat",U(B.alm)]],{num:1,ind:360}),
+      P("adalah ayah dan ibu kandung/wali/pengampu dari:",{bf:100,af:40}),KV(FULL(anak,anakMale),{ind:360}),
+      P("memberikan izin kepada anak kami untuk melakukan pernikahan dengan:",{bf:100,af:40}),KV(FULL(pas,!anakMale),{ind:360}),
+      P("Demikian surat izin ini di buat dengan kesadaran tanpa ada paksaan dari siapapun dan untuk digunakan seperlunya.",{al:AL.JUSTIFIED,fl:567,bf:100,af:160}),
+      P(dateLine,{al:AL.RIGHT,af:100}),Sign([{top:["Ayah/wali/pengampu"],name:A.st==="ADA"?A.nama:"-"},{top:["Ibu/wali/pengampu"],name:B.st==="ADA"?B.nama:"-"}]))}
+
+  function Status(p,male){
+    JUD("SURAT PERNYATAAN STATUS",26);
+    kids.push(P("Yang bertanda tangan di bawah ini :",{sz:22,af:100}),
+      KV([["Nama lengkap dan alias",U(p.nama)],[male?"Bin":"Binti",U(p.bin)],["Nomor Induk Kependudukan (NIK)",p.nik],["Tempat dan Tanggal Lahir",U(p.ttl)],["Kewarganegaraan",U(p.wn)],["Agama",U(p.agm)],["Pekerjaan",U(p.kerja)],["Tempat Tinggal",U(p.alm)]],{num:1,lw:3500,sz:22}),P("",{af:100}));
+    var st=U(p.stat),lm=p.lama?U(p.lama):"",belum=p.stat==="Belum Kawin",cer=/^Cerai/i.test(p.stat||""),sb=cer?st:U(p.sebab||""),pas=male?"istri":"suami",t,
+        akhir=" dan saya tidak sedang terkait dalam pernikahan dengan siapapun baik secara adat maupun secara tercatat pada Kantor Urusan Agama / Kantor Catatan Sipil.",
+        awal="Menyatakan dengan sesungguhnya bahwa sampai saat Surat Pernyataan ini dibuat saya ";
+    if(belum)t=awal+"belum pernah menikah / kawin dan berstatus "+st+akhir;
+    else if(p.stat==="Kawin")t=awal+"berstatus "+st+(lm?" ("+pas+": "+lm+")":"")+" dan saya tidak sedang terkait dalam pernikahan dengan siapapun selain yang tersebut di atas, baik secara adat maupun secara tercatat pada Kantor Urusan Agama / Kantor Catatan Sipil.";
+    else if(sb==="CERAI MATI")t=awal+"pernah menikah / kawin dan berstatus "+(cer?sb:st+" "+sb)+" karena "+pas+" saya"+(lm?", "+lm+",":"")+" telah meninggal dunia,"+akhir;
+    else t=awal+"pernah menikah / kawin dan berstatus "+(cer?sb:st+(sb?" "+sb:""))+(lm?" dengan "+pas+" terdahulu saya, "+lm+",":"")+akhir;
+    J(t,22);
+    J("Apabila dikemudian hari pernyataan saya tidak benar / palsu, maka saya bersedia dituntut sesuai dengan hukum yang berlaku (Pasal 392 Ayat 2 UU No. 1 Tahun 2023 tentang KUHP. Jo 15 UU No. 1 /1974).",22);
+    J("Demikian surat pernyataan ini saya buat, dan saya tanda tangani dengan sebenar-benarnya tanpa ada unsur paksaan dari pihak manapun juga, dan apabila ternyata dikemudian hari surat pernyataan ini tidak benar, maka saya bersedia dituntut di muka Pengadilan sesuai dengan hukum yang berlaku.",22);
+    kids.push(Sign([{},{top:[tc2(U(p.desa))+", "+tglS,"Yang Menyatakan"],box:1,name:U(p.nama),u:1}]))}
+
+  function DataSurat(){
+    JUD("SURAT PERNYATAAN DATA CALON SUAMI, ISTRI, WALI & SAKSI",24);
+    kids.push(P("Yang bertanda tangan di bawah ini, bahwa nama di bawah ini SUDAH SESUAI DENGAN DATA YANG ADA di Kartu Keluarga / Data DUKCAPIL",{al:AL.JUSTIFIED,af:100}));
+    function rows8(q,male){return [["Nama lengkap dan alias",U(q.nama)],[male?"Bin":"Binti",U(q.bin)],["Nomor Induk Kependudukan / NIK",q.nik],["Tempat dan tanggal lahir",U(q.ttl)],["Warga negara",U(q.wn)],["Agama",U(q.agm)],["Pekerjaan",U(q.kerja)],["Alamat",U(q.alm)]]}
+    function rows5(k){return [["Nama lengkap dan alias",U(V(k+"_nama"))],["Nomor Induk Kependudukan / NIK",V(k+"_nik")],["Tempat dan tanggal lahir",U(ttlOf(k))],["Pekerjaan",U(V(k+"_kerja"))],["Alamat",U(V(k+"_alm"))]]}
+    var o8={num:1,ind:360,lw:3600};
+    kids.push(P("I.  CALON SUAMI",{b:1}),KV(rows8(S,true),o8),P("II.  CALON ISTRI",{b:1,bf:80}),KV(rows8(I,false),o8),P("III.  CALON WALI",{b:1,bf:80}),
+      KV([["HUBUNGAN WALI",WL?(HB==="AYAH"?"AYAH KANDUNG":U(HUB)):"WALI HAKIM"]].concat(!WL&&HAKT?[["ALASAN WALI HAKIM",HAKT]]:[]),{ind:360,lw:3600}));
+    if(WL)kids.push(KV(rows8(WL,true),o8));
+    kids.push(P([R("IV.  MAS KAWIN",{b:1}),R("   :  "+U(V("mahar")))],{bf:80}),P("V.  CALON SAKSI",{b:1,bf:80}),
+      P("I.",{ind:360,af:20}),KV(rows5("sk1"),{num:1,ind:720,lw:3300}),P("II.",{ind:360,af:20,bf:40}),KV(rows5("sk2"),{num:1,ind:720,lw:3300}),
+      P(tc2(V("kuaKec"))+", "+tglS,{al:AL.RIGHT,bf:120,af:60}),
+      Sign([{top:["Calon Suami"],name:S.nama},{top:["Calon Istri"],name:I.nama},{top:[WL?"Wali Nikah":"Wali Hakim"],name:WL?WL.nama:""},{top:["Modin/Perangkat Desa","Ikut memeriksa"],name:V("modin")}].map(function(c){c.name=c.name?U(c.name):"";return c})))}
+
+  function WaliSurat(){
+    JUD("SURAT KETERANGAN & PERNYATAAN WALI NIKAH",24);
+    kids.push(P("Yang bertanda tangan di bawah ini menerangkan dan menyatakan dengan sesungguhnya bahwa:",{af:80}),P("A."),KV(FULL(WL,true),{num:1,ind:360}),
+      P("Sesuai dengan hukum Islam/Fiqh berhak menjadi WALI NIKAH dari :",{b:1,bf:100}),P("B."),KV(FULL(I,false),{num:1,ind:360}),
+      P("",{af:60}),KV([["HUBUNGAN WALI NIKAH",HB==="AYAH"?"AYAH KANDUNG":U(HUB)],["ALASAN BILA BUKAN WALI AYAH",HB==="AYAH"?"":U(V("w_alasan"))]],{ind:360,lw:3800}),
+      P("Demikianlah surat keterangan ini dibuat dengan mengingat sumpah jabatan dan untuk digunakan seperlunya.",{fl:567,bf:120,af:160}),
+      Sign([{top:["WALI NIKAH"],name:U(WL.nama)},{top:["SAKSI I"],name:U(V("sk1_nama"))},{top:["SAKSI II"],name:U(V("sk2_nama"))}]));
+    var kd=I.kades_nama?[U(I.kades_nama),I.kades_jab||"Kepala Desa"]:null,dn=tc2(U(I.desa).replace(/^(DESA|KELURAHAN|KEL\.?)\s+/,""));
+    kids.push(P("",{af:100}),Sign([{},{},{top:[tc2(V("kuaKec"))+", "+tglS,"Mengetahui :",(kd?kd[1]:"Kepala Desa/Lurah")+" "+dn],name:kd?kd[0]:"................................",u:!!kd}]))}
+
+  function SPTJM(){
+    JUD("SURAT PERNYATAAN TANGGUNG JAWAB MUTLAK",24);
+    function blk(l,t,q,male){return [P(l+".  "+t,{b:1,bf:80}),KV([["Nama Lengkap",U(q.nama)],[male?"Bin":"Binti",U(q.bin)],["NIK",q.nik],["Tempat dan Tanggal lahir",U(q.ttl)],["Kewarganegaraan",U(q.wn)],["Agama",U(q.agm)],["Pekerjaan",U(q.kerja)],["Alamat",U(q.alm)]],{num:1,ind:360,lw:3300})]}
+    kids.push(P("Yang bertanda tangan di bawah ini :",{af:80}));
+    blk("A","Calon Suami",S,true).concat(blk("B","Calon Istri",I,false)).forEach(function(x){kids.push(x)});
+    J("Menyatakan dengan sesungguhnya bahwa kami bertanggung jawab penuh atas akad nikah kami pada hari, tanggal : "+hariTgl($("akad").value)+" bertempat di : "+tempatAkad());
+    J("Akad nikah tersebut mendesak untuk dilaksanakan kurang dari 10 (sepuluh) hari kerja dari pendaftaran kehendak nikah karena "+U(V("alasan")));
+    J("Demikian surat pernyataan ini dibuat untuk digunakan sebagaimana mestinya.");
+    kids.push(P(kota+", "+tglS,{al:AL.RIGHT,bf:120,af:60}),Sign([{top:["Calon Suami,"],name:U(S.nama)},{box:1},{top:["Calon Istri,"],name:U(I.nama)}]))}
+
+  function LampKTP(){   /* bagian sendiri dengan margin 10 mm agar KTP bisa tampil ukuran asli 85,6 x 54 mm */
+    ktpKids.push(P("LAMPIRAN FOTOCOPY KTP",{al:AL.CENTER,b:1,sz:24,af:0}),P("CATIN, ORANGTUA / WALI DAN SAKSI",{al:AL.CENTER,b:1,sz:24,af:120}));
+    var ws=(WL&&HB!=="AYAH"&&KTPIMG.w)?"w":"iA",sl=[["s","CATIN LAKI-LAKI"],["i","CATIN PEREMPUAN"],["sA","AYAH CATIN LAKI-LAKI"],[ws,"AYAH CATIN PEREMPUAN / WALI"],["sI","IBU CATIN LAKI-LAKI"],["iI","IBU CATIN PEREMPUAN"],["sk1","SAKSI I"],["sk2","SAKSI II"]],
+        cw=Math.floor(((F4?12189:11906)-1134)/2),rows=[],r,KWp=324,KHp=204,tr=85.6/54;   /* 85,6 x 54 mm = 324 x 204 px */
+    for(r=0;r<4;r++)(function(r){rows.push(new D.TableRow({cantSplit:true,children:[0,1].map(function(c){
+      var q=sl[r*2+c],im=KTPIMG[q[0]],ch=[],iw,ih,sc;
+      if(im){if(Math.abs(im.w/im.h/tr-1)<.1){iw=KWp;ih=KHp}else{sc=Math.min(KWp/im.w,KHp/im.h);iw=Math.round(im.w*sc);ih=Math.round(im.h*sc)}
+        ch.push(new D.Paragraph({alignment:AL.CENTER,spacing:{before:60,after:20},children:[new D.ImageRun({data:b64(im.url),type:"jpg",transformation:{width:iw,height:ih}})]}))}
+      else ch.push(P("(KTP belum diunggah)",{al:AL.CENTER,sz:18,bf:1500,af:1500}));
+      ch.push(P(q[1],{al:AL.CENTER,b:1,sz:16,af:40}));
+      return new D.TableCell({children:ch,width:{size:cw,type:D.WidthType.DXA}})})}))})(r);
+    ktpKids.push(new D.Table({rows:rows,width:{size:cw*2,type:D.WidthType.DXA},columnWidths:[cw,cw]}))}
+
+  if($("c_n1").checked){N1(S,SA,SI,true);N1(I,IA,II,false)}
+  if($("c_n2").checked)N2();
+  if($("c_n4").checked)N4();
+  if($("c_n5").checked){if(sU)N5(SA,SI,S,I,true);if(iU)N5(IA,II,I,S,false)}
+  if($("c_status").checked){Status(S,true);Status(I,false)}
+  if($("c_data").checked)DataSurat();
+  if($("c_wali").checked&&WL)WaliSurat();
+  if($("c_sptjm").checked)SPTJM();
+  if($("c_ktp").checked)LampKTP();
+  if(!kids.length&&!ktpKids.length)throw new Error("Tidak ada berkas yang dibuat. N5 hanya untuk calon pengantin berusia kurang dari 21 tahun saat akad, dan surat wali nikah hanya untuk wali nasab.");
+  var PG={width:F4?12189:11906,height:F4?18709:16838},secs=[];
+  if(kids.length)secs.push({properties:{page:{size:PG,margin:{top:794,bottom:794,left:1247,right:1247}}},children:kids});
+  if(ktpKids.length)secs.push({properties:{page:{size:PG,margin:{top:567,bottom:567,left:567,right:567}}},children:ktpKids});
+  return D.Packer.toBlob(new D.Document({creator:"Formulir Pendaftaran Nikah",title:"Berkas Pendaftaran Nikah",sections:secs}))}
+
+$("goDocx").addEventListener("click",function(){
+  var e=validate();if(e==="__MISS__"){renderMiss();return}if(e){msg(e,true);return}
+  if(!window.docx){msg("Pustaka Word belum termuat. Periksa koneksi lalu muat ulang halaman.",true);return}
+  var b=$("goDocx");b.disabled=true;msg("Membuat file Word…");
+  setTimeout(function(){
+    var p;try{p=buildDocx()}catch(x){msg("Gagal membuat file Word: "+(x&&x.message||x),true);b.disabled=false;return}
+    p.then(function(blob){
+      stamp();LASTD={blob:blob,name:"BERKAS_NIKAH_"+V("s_nama").split(/\s+/)[0].toUpperCase()+"_"+V("i_nama").split(/\s+/)[0].toUpperCase()+".docx"};saveBlob(LASTD);showHasil();
+      var wr=cekItems().filter(function(x){return x.t==="warn"}).map(function(x){return x.h.replace(/<[^>]+>/g,"")});
+      msg("File Word siap. Buka di Microsoft Word atau Google Docs untuk mengetik/mengedit."+(wr.length?" PERHATIAN: "+wr.join(" "):""),false,true)})
+    .catch(function(x){msg("Gagal membuat file Word: "+(x&&x.message||x),true)})
+    .then(function(){b.disabled=false})},30)});
 
 /* ---------- simpan otomatis & pulihkan isian ---------- */
 var KEY="formNikahDraft_v1",store=null,saveT=null,restoring=false,toastT=null;
