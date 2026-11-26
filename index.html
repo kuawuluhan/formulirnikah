@@ -516,14 +516,26 @@ function saveKtp(p,im,box){
     bt.textContent="\u2702\ufe0f Atur potongan foto";bt.onclick=function(){openCrop(p)};pv.parentNode.appendChild(bt)}}
 /* atur potongan manual: geser sudut/kotak, atau pakai foto utuh */
 function openCrop(p){
-  var src=KTPSRC[p];if(!src)return;var im=src.im,IW=im.naturalWidth,IH=im.naturalHeight;
+  var src=KTPSRC[p];if(!src)return;
+  var base=src.im,W0=base.naturalWidth,H0=base.naturalHeight,ks=Math.min(1,2400/Math.max(W0,H0)),
+      ang=(KTPIMG[p]&&KTPIMG[p].ang)||0,im=base,IW=W0,IH=H0;
+  /* foto diputar 'deg' derajat (positif = searah jarum jam) ke kanvas baru; sudut 0 memakai foto asli apa adanya */
+  function view(deg){
+    if(!deg)return {c:base,w:W0,h:H0};
+    var r=deg*Math.PI/180,cs=Math.abs(Math.cos(r)),sn=Math.abs(Math.sin(r)),w=Math.round((W0*cs+H0*sn)*ks),h=Math.round((W0*sn+H0*cs)*ks),
+        c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d");
+    g.fillStyle="#fff";g.fillRect(0,0,w,h);g.imageSmoothingQuality="high";g.translate(w/2,h/2);g.rotate(r);g.drawImage(base,-W0*ks/2,-H0*ks/2,W0*ks,H0*ks);
+    return {c:c,w:w,h:h}}
+  var v0=view(ang);im=v0.c;IW=v0.w;IH=v0.h;
   var cur=KTPIMG[p]&&KTPIMG[p].box?KTPIMG[p].box:[0,0,IW,IH];
   var rc={x:cur[0],y:cur[1],w:cur[2],h:cur[3]};
   if(!(rc.w>=IW-1&&rc.h>=IH-1)){var s0=snapKtpBox(rc.x,rc.y,rc.w,rc.h,IW,IH);rc={x:s0[0],y:s0[1],w:s0[2],h:s0[3]}}
   var ov=document.createElement("div");
   ov.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;gap:10px";
-  var k=Math.min((window.innerWidth-20)/IW,(window.innerHeight-120)/IH,720/IW);
-  var cv=document.createElement("canvas");cv.width=Math.round(IW*k);cv.height=Math.round(IH*k);cv.style.cssText="touch-action:none;border-radius:6px;background:#222";
+  var k=1;
+  var cv=document.createElement("canvas");cv.style.cssText="touch-action:none;border-radius:6px;background:#222";
+  function sizeCanvas(){k=Math.min((window.innerWidth-20)/IW,(window.innerHeight-200)/IH,720/IW);cv.width=Math.round(IW*k);cv.height=Math.round(IH*k)}
+  sizeCanvas();
   var tx=document.createElement("div");tx.style.cssText="color:#fff;font-size:13px;text-align:center";tx.textContent="Geser sudut kotak putih agar pas mengikuti tepi KTP.";
   var bar=document.createElement("div");bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
   function B(t,f,pri){var b=document.createElement("button");b.type="button";b.textContent=t;b.onclick=f;
@@ -554,15 +566,33 @@ function openCrop(p){
     draw()};
   cv.onpointerup=cv.onpointercancel=function(){drag=null};
   function close(){document.body.removeChild(ov)}
+  /* ---- putar/luruskan foto ---- */
+  function setAngle(a){a=Math.max(-15,Math.min(15,Math.round(a*10)/10));if(a===ang)return;
+    var kP=ang?ks:1,kN=a?ks:1,r0=ang*Math.PI/180,r1=a*Math.PI/180,
+        ox=rc.x+rc.w/2-IW/2,oy=rc.y+rc.h/2-IH/2,
+        ux=(ox*Math.cos(-r0)-oy*Math.sin(-r0))/kP,uy=(ox*Math.sin(-r0)+oy*Math.cos(-r0))/kP,   /* pusat kotak di koordinat foto asli */
+        vx=(ux*Math.cos(r1)-uy*Math.sin(r1))*kN,vy=(ux*Math.sin(r1)+uy*Math.cos(r1))*kN,        /* ... lalu di foto yang sudah diputar */
+        sw=rc.w*kN/kP,sh=rc.h*kN/kP;
+    ang=a;var v=view(a);im=v.c;IW=v.w;IH=v.h;
+    rc.w=Math.min(sw,IW);rc.h=Math.min(sh,IH);
+    rc.x=Math.max(0,Math.min(IW-rc.w,IW/2+vx-rc.w/2));rc.y=Math.max(0,Math.min(IH-rc.h,IH/2+vy-rc.h/2));
+    if(lock){var s3=snapKtpBox(rc.x,rc.y,rc.w,rc.h,IW,IH,true);rc={x:s3[0],y:s3[1],w:s3[2],h:s3[3]}}
+    sizeCanvas();alab();draw()}
+  var rot=document.createElement("div");rot.style.cssText="display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;width:100%;max-width:440px";
+  var sl=document.createElement("input");sl.type="range";sl.min="-15";sl.max="15";sl.step="0.1";sl.value=String(ang);sl.style.cssText="flex:1;min-width:0";
+  var al=document.createElement("span");al.style.cssText="min-width:54px;text-align:center";
+  function alab(){al.textContent=(ang>0?"+":"")+ang.toFixed(1)+"°";sl.value=String(ang)}
+  var pend=0;sl.oninput=function(){if(pend)return;pend=requestAnimationFrame(function(){pend=0;setAngle(parseFloat(sl.value))})};
+  rot.appendChild(B("↶",function(){setAngle(ang-.5)}));rot.appendChild(sl);rot.appendChild(B("↷",function(){setAngle(ang+.5)}));rot.appendChild(al);
   var bl=B("",function(){lock=!lock;if(lock){var s2=snapKtpBox(rc.x,rc.y,rc.w,rc.h,IW,IH,true);rc={x:s2[0],y:s2[1],w:s2[2],h:s2[3]}}lab();draw()});
   function lab(){bl.textContent=lock?"Rasio KTP: terkunci":"Potong bebas";
-    tx.textContent=lock?"Geser sudut kotak putih mengikuti tepi KTP. Rasio dikunci 85,6 × 54 agar KTP tercetak ukuran asli.":"Potong bebas: sudut kotak digeser sendiri-sendiri."}
+    tx.textContent=lock?"Geser sudut kotak putih mengikuti tepi KTP. Bila miring, luruskan dengan geser/tombol sudut di bawah. Rasio dikunci 85,6 × 54 agar KTP tercetak ukuran asli.":"Potong bebas: sudut kotak digeser sendiri-sendiri."}
   bar.appendChild(bl);
   bar.appendChild(B("Foto utuh",function(){rc={x:0,y:0,w:IW,h:IH};draw()}));
   bar.appendChild(B("Batal",close));
-  bar.appendChild(B("Simpan",function(){var r=renderKtp(im,rc.x,rc.y,rc.w,rc.h,rc.w>=IW-1&&rc.h>=IH-1?"utuh":"manual");KTPIMG[p]=r;
+  bar.appendChild(B("Simpan",function(){var r=renderKtp(im,rc.x,rc.y,rc.w,rc.h,rc.w>=IW-1&&rc.h>=IH-1?"utuh":"manual");r.ang=ang;KTPIMG[p]=r;
     var pv=$(p+"_ktp_pv");if(pv)pv.src=r.url;close()},true));
-  ov.appendChild(tx);ov.appendChild(cv);ov.appendChild(bar);document.body.appendChild(ov);lab();draw()}
+  ov.appendChild(tx);ov.appendChild(cv);ov.appendChild(rot);ov.appendChild(bar);document.body.appendChild(ov);lab();alab();draw()}
 
 /* ---------- upload KTP (OCR di browser) ---------- */
 (function(){
