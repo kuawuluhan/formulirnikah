@@ -641,6 +641,45 @@ function openCrop(p){
       if(m.status==="recognizing text")onProg("Membaca KTP… "+Math.round((m.progress||0)*100)+"%");
       else onProg("Memuat pembaca teks… (pertama kali butuh beberapa saat)")}}).then(function(w){return w.setParameters({preserve_interword_spaces:"1"}).then(function(){return w})}).catch(function(e){ocr=null;throw e});
     return ocr}
+  /* ---- PaddleOCR (dicoba lebih dulu); bila gagal dimuat, otomatis memakai Tesseract ---- */
+  var paddle=null,paddleGagal=false;
+  function getPaddle(){
+    if(paddleGagal)return Promise.reject(new Error("PaddleOCR tidak tersedia"));
+    if(!paddle)paddle=import("https://esm.sh/ppu-paddle-ocr@6.0.0/web").then(function(mod){
+      var Svc=mod.PaddleOcrService||(mod.default&&mod.default.PaddleOcrService);
+      if(!Svc)throw new Error("PaddleOCR tidak tersedia");
+      var sv=new Svc();return Promise.resolve(sv.initialize()).then(function(){return sv})}).catch(function(e){paddle=null;paddleGagal=true;throw e});
+    return paddle}
+  function boxOf(b){if(!b)return null;var x,y,w,h,i,xs,ys;
+    if(Array.isArray(b)){
+      if(b.length&&typeof b[0]==="object"){xs=b.map(function(q){return q.x!==undefined?q.x:q[0]});ys=b.map(function(q){return q.y!==undefined?q.y:q[1]});
+        x=Math.min.apply(null,xs);y=Math.min.apply(null,ys);return{x:x,y:y,w:Math.max.apply(null,xs)-x,h:Math.max.apply(null,ys)-y}}
+      if(b.length===4&&typeof b[0]==="number")return{x:b[0],y:b[1],w:b[2],h:b[3]};return null}
+    x=b.x!==undefined?b.x:(b.left!==undefined?b.left:b.x0);y=b.y!==undefined?b.y:(b.top!==undefined?b.top:b.y0);
+    w=b.width!==undefined?b.width:(b.w!==undefined?b.w:(b.x1!==undefined?b.x1-x:undefined));h=b.height!==undefined?b.height:(b.h!==undefined?b.h:(b.y1!==undefined?b.y1-y:undefined));
+    return(isFinite(x)&&isFinite(y)&&isFinite(w)&&isFinite(h))?{x:x,y:y,w:w,h:h}:null}
+  /* hasil PaddleOCR -> teks per baris ("Nama : XXX"), disusun dari posisi kotak teks */
+  function paddleText(res){var items=[];
+    (function walk(a){if(!a)return;if(Array.isArray(a)){a.forEach(walk);return}
+      if(typeof a==="object"){if(typeof a.text==="string"&&(a.box||a.bbox||a.frame||a.rect)){items.push({t:a.text,b:boxOf(a.box||a.bbox||a.frame||a.rect)});return}
+        if(a.lines)walk(a.lines);else if(a.items)walk(a.items);else if(a.results)walk(a.results)}})(res);
+    items=items.filter(function(q){return q.b&&q.t&&q.t.trim()});
+    if(items.length>=5){var mr=Math.max.apply(null,items.map(function(q){return q.b.x+q.b.w})),W=mr/.96;   /* kolom foto & kota/tanggal terbit di kanan bukan isian data */
+      var kept=items.filter(function(q){return q.b.x<.7*W});if(kept.length>=3)items=kept}
+    if(items.length<3)return(res&&typeof res.text==="string")?res.text:"";
+    var hs=items.map(function(q){return q.b.h}).sort(function(a,b){return a-b}),mh=hs[Math.floor(hs.length/2)]||10;
+    items.sort(function(a,b){return(a.b.y+a.b.h/2)-(b.b.y+b.b.h/2)});
+    var rows=[],cur=null;
+    items.forEach(function(q){var cy=q.b.y+q.b.h/2;
+      if(cur&&Math.abs(cy-cur.cy)<=mh*.6){cur.a.push(q);cur.cy=(cur.cy*(cur.a.length-1)+cy)/cur.a.length}else{cur={cy:cy,a:[q]};rows.push(cur)}});
+    return rows.map(function(r){return r.a.sort(function(a,b){return a.b.x-b.b.x}).map(function(q){return q.t.trim()}).join(" ")}).join("\n")}
+  function toCanvas(src,max){return new Promise(function(res,rej){var im=new Image();im.onload=function(){var k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
+    c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c)};im.onerror=function(){rej(new Error("gambar"))};im.src=src})}
+  function paddleRead(p,f){onProg("Memuat PaddleOCR… (pertama kali butuh beberapa saat)");
+    return getPaddle().then(function(sv){onProg("Membaca KTP dengan PaddleOCR…");
+      var src=KTPIMG[p]&&KTPIMG[p].url;
+      var cv=src?toCanvas(src,1600):toCanvas(URL.createObjectURL(f),1600);
+      return cv.then(function(c){return sv.recognize(c)})}).then(paddleText)}
   function loadImg(f){return new Promise(function(res,rej){var u=URL.createObjectURL(f),im=new Image();
     im.onload=function(){URL.revokeObjectURL(u);res(im)};im.onerror=function(){rej(new Error("File gambar tidak bisa dibuka."))};im.src=u})}
   function prep(im,mode){
@@ -729,7 +768,14 @@ function parseKTP(text){
   var nk=ktpDigits(pick(/\bN[I1l|]K\b\s*[:;.\-]*\s*(.+)/i)).slice(0,16);
   if(nk.length<16){for(var i=0;i<L.length;i++){var m=L[i].replace(/\s/g,"").match(/[0-9OoDQIl|!ZSBG]{15,17}/);if(m){var d=ktpDigits(m[0]);if(d.length===16){nk=d;break}}}}
   if(nk.length===16)out.nik=nk;
-  out.nama=(pick(/^\s*nama\s*[:;.\-]*\s*(.+)/i)||fz("nama")).replace(/[^A-Za-z'.\- ]/g,"").replace(/\s{2,}/g," ").trim().toUpperCase();
+  out.nama=(pick(/^\s*nama\s*[:;.\-]*\s*(.+)/i)||fz("nama")).replace(/[^A-Za-z'.\- ]/g,"").replace(/\s{2,}/g," ").trim().toUpperCase();/* nama panjang di KTP turun ke baris berikutnya (tanpa label/titik dua): gabungkan sampai ketemu baris label berikutnya */
+  (function(){var ni=-1;for(var i=0;i<L.length;i++){if(/^\s*n[a4]ma\s*[:;.\-]/i.test(L[i])){ni=i;break}}
+    if(ni<0)return;
+    for(var j=ni+1;j<=ni+2&&j<L.length;j++){var ln=L[j].replace(/^[:;.\-\s]+/,"").trim();
+      if(!ln||/[:;\d\/]/.test(ln)||!/^[A-Za-z'.\- ]{2,}$/.test(ln))break;
+      if(/tempat|t[ge]l\s*lahir|jenis|kelamin|alamat|gol\.?\s*darah|agama|status|pekerjaan|kewarga|berlaku|kecamatan|desa/i.test(ln))break;
+      out.nama=(out.nama+" "+ln.toUpperCase()).replace(/\s{2,}/g," ").trim()}})();
+  out.nama=fixNama(out.nama);
   var t=pick(/tempat.{0,8}lahir\s*[:;.\-]*\s*(.+)/i)||fz("tempattgllahir")||pickDate();
   var dm=t.match(/(\d{1,2})\s*[-\/. ]\s*(\d{1,2})\s*[-\/. ]\s*(\d{4})/);
   if(dm){var da=+dm[1],mo=+dm[2],ye=+dm[3];if(da>=1&&da<=31&&mo>=1&&mo<=12&&ye>=1900&&ye<=2100)out.tgl=ye+"-"+pad(mo)+"-"+pad(da)}
@@ -771,12 +817,29 @@ function parseKTP(text){
       if(cands.length){cands.sort(function(x,y){return y.take-x.take||x.d-y.d});var c=cands[0];
         res.splice.apply(res,[i+1,c.take].concat(c.n.split(" ")));break}}
     return res.join(" ")}
+  /* PaddleOCR sering menggabung kata tanpa spasi: "DJSUNKRAJANKJLON" -> "DUSUN KRAJAN KULON" (cocokkan ke daftar dusun) */
+  function fixGlued(v,key){if(typeof DUSUN==="undefined"||!v)return v;
+    var tk=v.split(/\s+/),g=tk[0].toUpperCase();if(g.length<9||!/^[A-Z]+$/.test(g))return v;
+    var pk=["DUSUN","DSN"],pl=0,i,d;for(i=0;i<pk.length;i++){if(lev(g.slice(0,pk[i].length),pk[i])<=1){pl=pk[i].length;break}}
+    if(!pl)return v;
+    var rest=g.slice(pl),pool=[];if(DUSUN[key])DUSUN[key].forEach(function(x){pool.push(x)});
+    for(d in DUSUN)DUSUN[d].forEach(function(x){if(pool.indexOf(x)<0)pool.push(x)});
+    var best=null,bs=-99,bl=0;
+    pool.forEach(function(nm){var nn=nm.replace(/\s/g,"");[nn.length,nn.length-1,nn.length+1].forEach(function(L){if(L<3||L>rest.length)return;
+      var dd=lev(rest.slice(0,L),nn),mx=Math.max(1,Math.floor(nn.length*.2)),sc=nn.length-3*dd;
+      if(dd<=mx&&sc>bs){bs=sc;best=nm;bl=L}})});
+    if(!best)return v;
+    var after=rest.slice(bl);return("DUSUN "+best+(after?" "+after:"")+(tk.length>1?" "+tk.slice(1).join(" "):"")).trim()}
   var a=getAddr(),rt=all.match(/R[TI1l]\s*\/?\s*R[WV]\s*[:;.\-]*\s*([0-9OoIl|]{1,3})\s*[\/\-]\s*([0-9OoIl|]{1,3})/i),
       desa=pick(/(?:k[eil1|]+\s*\/?\s*[dDoO0][eo]sa|d[eo]sa\s*\/?\s*k[eil1|]+)\s*[:;.\-]*\s*(.+)/i)||fz("keldesa")||fz("desakel"),
       kec=pick(/^\s*kecamatan\s*[:;.\-]*\s*(.+)/i)||fz("kecamatan"),
       kb=pick(/^\s*(?:KABUPATEN|KOTA)\s+(.+)/i);
   if(!rt){for(var q=0;q<L.length;q++){if(/lahir|berlaku|nik/i.test(L[q]))continue;var rm=L[q].match(/(?:^|\D)(\d{3})\s*\/\s*(\d{3})(?:\D|$)/);if(rm){rt=[0,rm[1],rm[2]];break}}}
   desa=canon(desa,DESA);kec=canon(kec,["WULUHAN"]);kb=canon(kb,["JEMBER"]);
+  /* baris "KABUPATEN ..." di kepala KTP sering terpotong/tidak terbaca: cari kata JEMBER di baris atas, atau isi JEMBER bila kecamatan/desanya wilayah Wuluhan */
+  if(!kb){for(var h=0;h<Math.min(L.length,4);h++){if(/J[EF]M?B[EF]R/i.test(L[h].replace(/\s/g,""))){kb="JEMBER";break}}}
+  if(!kb&&/WULUHAN/i.test(kec||"")||!kb&&DESA.indexOf(String(desa||"").replace(/^(DESA|KELURAHAN|KEL\.?)\s+/i,"").toUpperCase().trim())>=0)kb="JEMBER";
+  a=fixGlued(a,desa.replace(/^(DESA|KELURAHAN|KEL\.?)\s+/i,"").toUpperCase().trim());
   a=fixDusun(a,desa.replace(/^(DESA|KELURAHAN|KEL\.?)\s+/i,"").toUpperCase().trim());
   out.desaKtp=desa.toUpperCase();
   function p3(x){x=String(x);while(x.length<3)x="0"+x;return x}
@@ -789,6 +852,21 @@ function parseKTP(text){
   return out}
 function ktpFixNik(out){if(out.nik&&out.nik.length===16&&out.tgl&&out.jk){var tg=out.tgl.split("-"),ex=pad(+tg[2]+(out.jk==="P"?40:0))+pad(+tg[1])+tg[0].slice(2);
   if(out.nik.slice(6,12)!==ex){out.nik=out.nik.slice(0,6)+ex+out.nik.slice(12);out.nikFix=1}}}
+/* nama: PaddleOCR sering menempelkan kata tanpa spasi (IFFAMIFTAHUROHMAH). Dipisah lagi memakai daftar kata nama umum. */
+var NAMAW={};"MIFTAHUROHMAH MIFTAHURRAHMAN ASSIDDIQI ASSIDDIQ ASSIDIQI SIDDIQI ZAHROH ROHMAHWATI AS SYIFAUL ABDUL ABDULLAH ABDUR ABDURRAHIM ABDURRAHMAN ABU ABUL ACHMAD AFIF AFIFAH AFIFUDDIN AGUS AHMAD AHMADI AHSANUL AKBAR AKHMAD AKMAL ALFI ALFIN ALI ALIF ALIYA ALIYAH ALVI ALVIN AMALIA AMALIYAH AMELIA AMIN AMINAH AMIR AMIRUL ANA ANAS ANDI ANDRE ANDRI ANGGA ANGGRAINI ANI ANIS ANISA ANISAH ANNA APRILIA ARDI ARDIANSYAH ARI ARIEF ARIF ARIFIN ARINI ARIS ARIYANTO ARUM ARYA ASIH ASMA ASMAUL ASNA ASRI ASYIFA ASYROFI ATIK ATIKA AULIA AULIYA AYU AZHAR AZIZ AZIZAH AZKA AZZAHRA BADRUL BAGUS BAHRUL BAHTIAR BAIQ BAMBANG BASIR BASORI BAYU BELLA BINTANG BUDI CAHYA CAHYO CANDRA CHOIRIYAH CHOIRUL CHOIRUN CHOLIFAH CHUSNUL CINTA CITRA DANI DARMAWAN DAUD DAWAM DEDI DEVI DEWA DEWI DIAN DIANA DIKA DIMAS DINA DINI DITA DIYAH DIYAN DONI DWI DWIKI EFENDI EKA EKO ELI ELIS ELSA EMA ENDANG ERIK ERLINA ERNA ERWIN EVA EVI FADHIL FADIL FADILLAH FAHMA FAHMI FAHRUL FAIRUZ FAISAL FAIZ FAIZAH FAIZIN FAJAR FANI FARAH FARAS FARHAN FARHATUL FARID FARIDA FATHONI FATHUL FATHUR FATIMA FATIMAH FATMA FAUZAN FAUZI FAUZIA FAUZIAH FAUZIYAH FEBRI FERDY FIKRI FIRA FIRDA FIRDAUS FIRDHA FIRMAN FITA FITRAH FITRI FITRIA FITRIANI FITRIYAH GALIH GHOFUR GILANG GITA HABIB HADI HAFID HAFIDZ HAFSAH HAIRUL HAKIM HALIM HALIMAH HAMDAN HAMID HAMIDAH HAMZAH HANA HANIF HANIFAH HANIM HARI HARIS HARTONO HASAN HASANAH HASBI HASBIYALLAH HASIM HASYIM HAYATUN HENDRA HENDRI HERI HERMAN HERU HESTI HIDAYAT HIDAYATI HIDAYATUL HILMI HOLIFAH HUDA HUDAYA HUSAIN HUSEN HUSIN HUSNUL IBNU IBRAHIM IDA IDRIS IFA IFFA IFFAH IKA IKHSAN ILHAM ILMA IMAM IMRON IMRONI INAYAH INAYATUL INDAH INDAHSARI INDRA INTAN IQBAL IRAWAN IRFAN IRFANI IRMA ISKANDAR ISLAMIYAH ISMA ISMAIL ISNA ISNAINI ISROFIL ISTI ISTIQOMAH ITA IZZATUL IZZUL JAMAL JAMILA JANUAR JAUHAR JAZILAH JIHAN JOKO JULI JUMAT JUNAID JUNAIDI KAMAL KAMILA KARIM KARTIKA KHAIRIYAH KHAIRUL KHAIRUN KHALIL KHANSA KHOIRIN KHOIRIYAH KHOIRUL KHOIRUN KHOLIFAH KHOLIK KHOTIB KHUSNUL KIRANA KURNIA KURNIAWAN KUSUMA LAILA LAILATUL LAILATUN LAILI LAILIYAH LARAS LATHIFAH LATIF LENI LESTARI LIA LILIS LINA LISA LISTIANA LUBNA LUKMAN LUQMAN LUTFI LUTFIAH LUTFIYAH LUTHFI MAHARANI MAHDI MAHESA MAHFUD MAHFUDZ MAHMUD MAHMUDAH MAIMUNAH MAISAROH MALIK MALIKAH MANSUR MARDIANA MARDIYAH MARIA MARIAM MARIYAM MARTA MARYAM MARYATI MASITHOH MASRUR MASRUROH MASYITOH MAULANA MAULID MAULIDAH MAULIDIA MAULIDYA MAWAR MAYA MEGA MELA MELI MIFTA MIFTAH MIFTAHUL MIFTAHUR MIFTAHURROHMAH MILA MIRZA MISBAHUL MOCHAMAD MOCHAMMAD MOH MOHAMAD MOHAMED MOHAMMAD MUBARAK MUBAROK MUCHAMAD MUCHAMMAD MUFARIDAH MUFID MUFIDAH MUFLIHAH MUH MUHAIMIN MUHAJIR MUHAMAD MUHAMMAD MUHAMMADUN MUHIBBAH MUHLISIN MUHSIN MUHTADI MUHTAROM MUJIB MUJIONO MUKAROMAH MUKHLIS MUKTI MULYANI MUNA MUNAWAROH MUNIR MUNIRAH MUNTAHA MUSA MUSHOFA MUSLIM MUSLIMAH MUSTAFA MUSTAKIM MUSTAQIM MUSTOFA MUZAYYANAH NABIL NABILA NADIA NADIYA NAFI NAFISAH NAILA NAILUL NAJIB NAJLA NAJWA NANDA NANI NASIHIN NASIKHAH NASIR NASRUL NAUFAL NAYLA NAZILAH NIA NIDA NIKMAH NIKMATUL NIKMATUS NINA NINGRUM NINGSIH NISA NISAA NISAK NOVAL NOVI NOVITA NUGROHO NUR NURAINI NURANI NURCHOLIS NURDIN NURFADILAH NURFITRIA NURHADI NURHALIZA NURHASAN NURHAYATI NURI NURIL NURJANAH NURKHOLIS NURMALA NURMALASARI NURSALIM NURSYAFA NURUDDIN NURUL NURWAHID NUZULUL OKTA OKTAVIA ONI PANGESTU PARAMITA PERMATA PRASETYA PRASETYO PRATAMA PRATIWI PUJI PURNAMA PURWANTO PUSPA PUSPITA PUTERI PUTRA PUTRI PUTU QOLBI QOMARIYAH QURROTA QURROTUL RACHMAN RACHMAT RADEN RAFI RAFIQ RAFLI RAHARJO RAHAYU RAHIM RAHMA RAHMADI RAHMAH RAHMAN RAHMAT RAHMATUL RAHMAWATI RAHMI RAISA RAMADAN RAMADHAN RAMLI RANI RATIH RATNA RAYHAN REFI RENI RETNO REVA REZA RIANA RICKY RIDHO RIDWAN RIFAI RIFKI RIFQI RINA RISA RISKA RISKI RIZAL RIZKA RIZKI RIZQI ROBBY ROBI RODIAH ROFIQ ROFIQAH ROHIM ROHMAH ROHMAN ROHMAT ROHMATUL ROIS ROMADHON ROMLAH ROSA ROSIDAH ROSITA ROSYAD ROSYID ROSYIDA ROSYIDAH ROZI RUDI RUDY RUKMANA RUSDI SABRINA SAFIRA SAFITRI SAHRUL SAID SAIFA SAIFI SAIFUDDIN SAIFUL SAIFULLAH SALAMAH SALEHA SALIM SALMA SALSABILA SAMSUL SAMSURI SANTI SANTOSO SAPUTRA SAPUTRI SARI SARIFAH SARIFUDDIN SAVITRI SAYYIDAH SELVI SEPTIAN SEPTIANI SETIAWAN SETIAWATI SHINTA SHOFIA SHOFIYAH SHOLEH SHOLEHAH SHOLIHAH SHOLIHIN SIDDIQ SIDIQ SINTA SIROJUL SITI SOFIA SOFIAN SOFIYAH SOLEH SOLEHA SOLIHIN SOLIKHIN SRI SUBUR SUCI SUDARSONO SUGENG SUHARTO SUKAMTI SUKMA SULAIMAN SULTAN SULTON SUMARNI SUMIATI SUNARTO SUPARMAN SUPRAPTO SUPRIYANTO SURYA SURYANI SUSANTI SUSANTO SUSILO SUTIKNO SUTRISNO SUWITO SYAFI SYAFIQ SYAHDAN SYAHRA SYAHRIL SYAHRUL SYAIFUDDIN SYAIFUL SYAIFULLAH SYAKIRA SYARIF SYARIFAH SYARIFUDDIN SYIFA SYIFAUL TAUFAN TAUFIK TAUFIQ TAUFIQOH TAUFIQURROHMAN TAZKIYA TEGUH TIARA TITIK TOHA TOHIR TRI TRIA TRIANA TSALITSA ULFA ULFAH ULIL UMAIROH UMAMI UMAR UMI UMMI UMMU URSULA USMAN UTAMI UTOMO VANIA VERA VIA VINA WAFA WAHID WAHIDAH WAHYU WAHYUDI WAHYUNI WAHYUNINGSIH WANTI WARDAH WARDI WIDIA WIDODO WIDYA WIJAYA WIJI WILDAN WINARTI WINDA WINDI YAHYA YANTI YASIN YASMIN YASMINE YENI YOGA YOSI YUDHA YUDI YULI YULIA YULIANA YULIANTI YUNI YUNITA YUSRIL YUSRON YUSUF ZAENAL ZAHIRA ZAHRA ZAHROTUL ZAHROTUN ZAIDAH ZAINAB ZAINAL ZAINUDDIN ZAINUL ZAKARIA ZAKI ZAKIA ZAKIYAH ZIDAN ZUBAIDAH ZUHDI ZUHRI ZUHRIYAH ZULAIKHA ZULAIKHAH ZULFA ZULFIKAR ZULKIFLI".split(" ").forEach(function(w){NAMAW[w]=1});
+function segTok(t){var n=t.length,i,j,c=[0],bk=[];
+  for(i=1;i<=n;i++){c[i]=1e9;for(j=Math.max(0,i-16);j<i;j++){var w=t.slice(j,i),k=NAMAW[w]?1:(i-j===1?5:1e9);
+    if(w.length>=2&&NAMAW[w])k=1;
+    if(c[j]+k<c[i]){c[i]=c[j]+k;bk[i]=j}}}
+  var parts=[],e=n;while(e>0){parts.unshift(t.slice(bk[e],e));e=bk[e]}
+  var out=[],cur="";parts.forEach(function(w){if(NAMAW[w]&&w.length>=2){if(cur){if(cur.length<=2&&out.length)out[out.length-1]+=cur;else out.push(cur);cur=""}out.push(w)}else cur+=w});if(cur){if(cur.length<=2&&out.length)out[out.length-1]+=cur;else out.push(cur)}
+  var unk=out.filter(function(w){return!NAMAW[w]}).join("").length;
+  return (out.length>=2&&unk<=n*.25)?out.join(" "):t}
+function fixNama(v){return String(v||"").split(/\s+/).map(function(t){return (t.length>=10&&!NAMAW[t])?segTok(t):t}).join(" ")}
+/* nama dari Paddle masih menempel panjang: pakai spasi dari Tesseract bila huruf-hurufnya mirip */
+function spasiNama(m,rp,rt){var a=(rp.nama||""),b=(rt.nama||"");
+  if(/\S{13,}/.test(a)&&b.indexOf(" ")>0){var x=a.replace(/ /g,""),y=b.replace(/ /g,"");if(lev(x,y)<=Math.max(2,Math.floor(x.length*.2)))m.nama=b}
+  return m}
 function ktpScore(r){var n=0;["nik","nama","tmp","tgl","jk","alm","agm","stat","kerja","wn"].forEach(function(k){if(r[k])n++});return n}
 function mergeKTP(a,b){var o={},k;for(k in a)o[k]=a[k];for(k in b){if(!o[k]||(k==="alm"&&b[k].length>o[k].length))o[k]=b[k]}return o}
 /* KTP-PARSER-END */
@@ -799,6 +877,10 @@ function mergeKTP(a,b){var o={},k;for(k in a)o[k]=a[k];for(k in b){if(!o[k]||(k=
     var couple=(p==="s"||p==="i"),male=(p==="s"||p==="sA"||p==="iA"||p==="w"||p==="sk1"||p==="sk2"),n=0,warn=[];
     function put(k,v){var el=$(p+"_"+k);if(!el||!v)return;
       if(k==="kerja"){var has=false,oo=el.options,q;for(q=0;q<oo.length;q++)if(oo[q].value===v)has=true;
+        if(!has){var nv=v.replace(/[^A-Za-z]/g,"").toUpperCase(),bo="",bdd=99,oo2=el.options;
+          for(q=0;q<oo2.length;q++){var ov=oo2[q].value,no=ov.replace(/[^A-Za-z]/g,"").toUpperCase();if(!ov||ov==="LAINNYA"||no.length<4)continue;
+            var dd=Math.min(lev(nv,no),lev(nv.slice(0,no.length),no));if(dd<bdd){bdd=dd;bo=ov}}
+          var mxk=Math.max(1,Math.floor(bo.replace(/[^A-Za-z]/g,"").length*.2));if(bo&&bdd<=mxk){v=bo;has=true}}
         if(has)el.value=v;else{el.value="LAINNYA";var l=$(p+"_kerja_lain");if(l){l.value=v;l.classList.add("auto")}}}
       else{el.value=v;if(el.tagName==="SELECT"&&el.value!==v){el.value="";return}}
       el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));
@@ -838,7 +920,8 @@ function mergeKTP(a,b){var o={},k;for(k in a)o[k]=a[k];for(k in b){if(!o[k]||(k=
     inp.addEventListener("change",function(){
       var f=this.files&&this.files[0];if(!f)return;
       msg("Menyiapkan foto…");onProg=function(t){msg(t)};
-      loadImg(f).then(function(im){try{saveKtp(p,im,box)}catch(e){}return getWorker().then(function(w){
+      var engine="";
+      function tessRead(im){return getWorker().then(function(w){
         nikLabel=null;
         return readLines(w,prep(im,"bin"),6).then(function(t1){var r1=parseKTP(t1);
           if(ktpScore(r1)>=8)return r1;
@@ -848,12 +931,20 @@ function mergeKTP(a,b){var o={},k;for(k in a)o[k]=a[k];for(k in b){if(!o[k]||(k=
           return nikRead(w,im).then(function(n){
             if(n){var q=(r.nik||"").length===16?r.nik:"";n=n.replace(/\?/g,function(m,i){return q?q.charAt(i):"?"});
               if(n.indexOf("?")<0){r.nik=n;r.nikFix=0;ktpFixNik(r)}else r.nik=""}
-            return r})})})})
+            return r})})})}
+      loadImg(f).then(function(im){try{saveKtp(p,im,box)}catch(e){}
+        return paddleRead(p,f).then(function(t){return{im:im,t:t}},function(){return{im:im,t:""}})})
+      .then(function(o){var rp=o.t?parseKTP(o.t):null;
+        if(rp&&ktpScore(rp)>=9&&rp.nik&&rp.nik.length===16&&!/\S{13,}/.test(rp.nama||"")){engine="PaddleOCR";return rp}
+        onProg("Memeriksa ulang dengan Tesseract…");
+        return tessRead(o.im).then(function(rt){engine=rp&&ktpScore(rp)>0?"PaddleOCR + Tesseract":"Tesseract"+(paddleGagal?" (PaddleOCR tidak tersedia)":"");return rp&&ktpScore(rp)>0?spasiNama(mergeKTP(rp,rt),rp,rt):rt},
+          function(e){if(rp&&ktpScore(rp)>0){engine="PaddleOCR";return rp}throw e})})
       .then(function(r){
         var o=apply(p,r);
         if(!o.n)msg("KTP belum terbaca. Coba foto yang lebih terang, lurus, dan tidak silau.","err");
         else if(o.warn.length)msg("Terisi "+o.n+" kolom (bertanda kuning). Perhatian: "+o.warn.join("; ")+". Ini hanya bantuan awal, ubah langsung di kolomnya bila ada yang salah.","err");
-        else msg("Terisi "+o.n+" kolom (bertanda kuning). Ini hanya bantuan awal, periksa dan ubah langsung di kolomnya bila ada yang salah.","ok")})
+        else msg("Terisi "+o.n+" kolom (bertanda kuning). Ini hanya bantuan awal, periksa dan ubah langsung di kolomnya bila ada yang salah.","ok");
+        if(o.n&&engine&&box.textContent)box.textContent+=" [Dibaca dengan "+engine+"]"})
       .catch(function(e){msg("Gagal membaca KTP: "+(e&&e.message||e),"err")})
       .then(function(){inp.value=""})})});
 })();
